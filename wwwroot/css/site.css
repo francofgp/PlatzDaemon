@@ -72,6 +72,7 @@ input[type=time], input[type=date] {
 
 /* Countdown timer */
 .countdown { font-size: 2em; font-weight: bold; text-align: center; letter-spacing: 4px; }
+.countdown.disabled { font-size: 1.2em; letter-spacing: 2px; color: var(--secondary-color); }
 
 /* Tag system (config page) */
 .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
@@ -97,6 +98,37 @@ input[type=time], input[type=date] {
     font-style: italic;
 }
 
+/* Custom checkbox – retro terminal style */
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--font-color);
+    background: var(--background-color);
+    cursor: pointer;
+    vertical-align: middle;
+    position: relative;
+    flex-shrink: 0;
+}
+input[type="checkbox"]:checked {
+    background: var(--font-color);
+}
+input[type="checkbox"]:checked::after {
+    content: '✓';
+    color: var(--background-color);
+    font-size: 14px;
+    font-weight: bold;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+input[type="checkbox"]:focus {
+    outline: 1px dashed var(--font-color);
+    outline-offset: 2px;
+}
+
 /* Layout helpers */
 .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
 .toggle-group { display: flex; align-items: center; gap: 10px; }
@@ -110,9 +142,61 @@ input[type=time], input[type=date] {
 .mt-2 { margin-top: 16px; }
 .mb-2 { margin-bottom: 16px; }
 
+/* === CRT retro effects (purely cosmetic, does not touch terminal.css) === */
+
+/* 1. Phosphor text glow */
+body.terminal {
+    text-shadow: 0 0 2px #33ff3366;
+}
+
+/* 2. CRT scanlines overlay */
+body.terminal::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 2px,
+        #00000018 2px,
+        #00000018 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* 3. CRT vignette (darkened edges) */
+body.terminal::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    box-shadow: inset 0 0 120px 40px #000000cc;
+    pointer-events: none;
+    z-index: 9998;
+}
+
+/* 4. Green scrollbar for log console */
+.log-console::-webkit-scrollbar { width: 8px; }
+.log-console::-webkit-scrollbar-track { background: var(--background-color); }
+.log-console::-webkit-scrollbar-thumb { background: #33ff3350; }
+.log-console::-webkit-scrollbar-thumb:hover { background: #33ff3380; }
+
+/* TODO: 6. CRT flicker - animacion sutil de parpadeo tipo monitor viejo.
+   Descomentar para probar, puede ser molesto en uso prolongado.
+body.terminal {
+    animation: crt-flicker 4s infinite;
+}
+@keyframes crt-flicker {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.98; }
+    75%      { opacity: 0.97; }
+}
+
+
 @media (max-width: 768px) {
     .status-row { flex-direction: column; }
     .countdown { font-size: 1.5em; }
     .log-console { height: 300px; }
     .ascii-art { font-size: 7px; }
 }
+*/

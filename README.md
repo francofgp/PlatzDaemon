@@ -160,7 +160,9 @@ Para la próxima versión: `git tag v1.1.0 && git push origin v1.1.0`, y así.
 ## Estructura del proyecto
 
 ```
-PlatzDaemon/
+court-daemon/
+├── .github/workflows/        # GitHub Actions
+│   └── release.yml           # Build & publish automático
 ├── Pages/                    # Páginas Razor (UI)
 │   ├── Index.cshtml          # Dashboard con logs en tiempo real
 │   ├── Config.cshtml         # Configuración "Mi Reserva"
@@ -178,15 +180,19 @@ PlatzDaemon/
 │   └── LogEntry.cs           # Entrada de log
 ├── Hubs/
 │   └── LogHub.cs             # Hub de SignalR para logs en tiempo real
-├── Data/
+├── Data/                     # (gitignored)
 │   ├── config.json           # Configuración persistida
 │   └── browser-data/         # Datos de sesión del navegador
-└── wwwroot/
-    ├── css/
-    │   ├── terminal.min.css  # terminal.css (tema retro)
-    │   └── site.css          # Estilos personalizados
-    └── js/
-        └── site.js           # JavaScript del cliente
+├── wwwroot/
+│   ├── css/
+│   │   ├── terminal.min.css  # terminal.css (tema retro)
+│   │   └── site.css          # Estilos personalizados
+│   └── js/
+│       └── site.js           # JavaScript del cliente
+├── PlatzDaemon.csproj        # Proyecto .NET
+├── Program.cs                # Entry point
+├── README.md
+└── DOCS.md
 ```
 
 ---

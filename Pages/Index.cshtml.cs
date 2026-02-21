@@ -17,6 +17,7 @@ public class IndexModel : PageModel
     public string? LastResult { get; set; }
     public string NextRunDisplay { get; set; } = "--:--:--";
     public string NextRunIso { get; set; } = "";
+    public bool IsCountdownDisabled { get; set; }
     public bool WhatsAppConnected { get; set; }
 
     public IndexModel(LogStore logStore, AppStateService appState, BookingSchedulerService scheduler)
@@ -40,6 +41,12 @@ public class IndexModel : PageModel
         {
             NextRunDisplay = state.NextRunTime.Value.ToString("HH:mm:ss");
             NextRunIso = state.NextRunTime.Value.ToString("o");
+        }
+        else
+        {
+            NextRunDisplay = "Desactivado";
+            NextRunIso = "";
+            IsCountdownDisabled = true;
         }
     }
 

@@ -417,22 +417,21 @@ Ir a la sección [Descarga y uso rápido](#descarga-y-uso-rápido) de este docum
 ### Modo desarrollo
 
 ```bash
-cd PlatzDaemon
+cd court-daemon
 dotnet run
 ```
 
-Se abre en `http://localhost:5203` (según `launchSettings.json`).
+Se abre en `http://localhost:5203` (según `Properties/launchSettings.json`).
 
 ### Modo producción
 
 ```bash
-cd PlatzDaemon
 dotnet run --environment Production
 ```
 
 Se abre automáticamente en `http://localhost:5000` en el navegador por defecto.
 
-### Publicar como EXE
+### Publicar como EXE (manual)
 
 ```bash
 dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
@@ -458,38 +457,65 @@ O en la ruta de publicación:
 pwsh bin/Release/net10.0-windows/win-x64/publish/playwright.ps1 install chromium
 ```
 
-### Distribuir vía GitHub Releases
+### Publicar Release automáticamente con GitHub Actions
 
-GitHub Releases es la forma estándar de compartir el programa con usuarios finales. Los usuarios solo necesitan descargar un ZIP desde la web, sin instalar nada.
+El proyecto incluye un workflow en `.github/workflows/release.yml` que **compila y publica el EXE automáticamente** cuando se pushea un tag de versión.
 
-#### Crear un Release
+#### Cómo funciona
+
+1. Vos creás un tag con formato `v*.*.*` (ej: `v1.0.0`).
+2. GitHub Actions se dispara automáticamente y:
+   - Compila el proyecto en un runner `windows-latest`.
+   - Genera el EXE self-contained con `dotnet publish`.
+   - Lo empaqueta en `PlatzDaemon-v1.0.0-win-x64.zip`.
+   - Crea un Release en GitHub con el ZIP adjunto, listo para descargar.
+
+#### Publicar una nueva versión
+
+```bash
+# 1. Commitear tus cambios
+git add -A
+git commit -m "feat: nueva funcionalidad"
+
+# 2. Crear el tag de versión
+git tag v1.0.0
+
+# 3. Pushear todo (código + tag)
+git push origin main
+git push origin v1.0.0
+```
+
+En unos minutos, el Release aparece automáticamente en la pestaña **Releases** del repositorio con el ZIP listo para descargar.
+
+#### Versiones siguientes
+
+Para cada nueva versión, solo cambiás el número del tag:
+
+```bash
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+#### Crear un Release manualmente (alternativa)
+
+Si preferís no usar GitHub Actions, también podés crear un Release manualmente:
 
 1. Ir al repositorio en GitHub.
-2. Click en la pestaña **"Releases"** (en la barra lateral derecha o en la parte superior).
-3. Click en **"Draft a new release"** (Crear nuevo release).
-4. En **"Choose a tag"**, escribí un tag nuevo (ej: `v1.0.0`) y seleccioná "Create new tag on publish".
-5. Poné un **título** (ej: `Platz Daemon v1.0.0`) y una **descripción** con las instrucciones de uso.
-6. En la sección **"Attach binaries by dropping them here"**, arrastrá el archivo ZIP generado (`PlatzDaemon-v1.0.0-win-x64.zip`).
-7. Click en **"Publish release"**.
+2. Click en la pestaña **"Releases"** → **"Draft a new release"**.
+3. En **"Choose a tag"**, escribí un tag nuevo (ej: `v1.0.0`) y seleccioná "Create new tag on publish".
+4. Poné un **título** (ej: `Platz Daemon v1.0.0`) y una **descripción**.
+5. En **"Attach binaries by dropping them here"**, arrastrá el archivo ZIP generado.
+6. Click en **"Publish release"**.
 
-#### Compartir con usuarios
+### Compartir con usuarios
 
-Después de publicar el Release, compartí este link:
+Después de publicar el Release (automático o manual), compartí este link:
 
 ```
 https://github.com/<tu-usuario>/<tu-repositorio>/releases/latest
 ```
 
 Este link siempre apunta a la versión más reciente. El usuario entra, baja hasta "Assets", descarga el ZIP, lo extrae, y ejecuta `PlatzDaemon.exe`. No necesita cuenta de GitHub, ni Git, ni ninguna herramienta de desarrollo.
-
-#### Actualizar el programa
-
-Para publicar una nueva versión:
-
-1. Compilá el EXE con `dotnet publish`.
-2. Comprimí la carpeta `publish/` en un nuevo ZIP (ej: `PlatzDaemon-v1.1.0-win-x64.zip`).
-3. Creá un nuevo Release con un tag nuevo (ej: `v1.1.0`).
-4. Los usuarios que entren al link de Releases siempre ven la última versión.
 
 ---
 

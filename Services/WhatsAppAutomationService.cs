@@ -352,10 +352,13 @@ public class WhatsAppAutomationService : IAsyncDisposable
                 await _log.LogInfoAsync("Esperando opciones de periodo...");
                 if (!await WaitForBotResponseAsync(page, countBeforeDate, 20000))
                 {
-                    await _log.LogWarningAsync("No se detecto respuesta del bot despues de la fecha, continuando...");
-                    await Task.Delay(3000);
+                    await _log.LogWarningAsync("No se detecto respuesta del bot despues de la fecha, esperando mas...");
+                    await Task.Delay(5000);
                     await ScrollToBottomAsync(page);
                 }
+                // Extra scroll to ensure latest messages are visible
+                await ScrollToBottomAsync(page);
+                await Task.Delay(1000);
 
                 // CHECK: Did the bot say we already have a reservation or no slots?
                 var blocker = await CheckForBookingBlockerAsync(page);
@@ -387,23 +390,45 @@ public class WhatsAppAutomationService : IAsyncDisposable
                     _ => "Turnos noche"
                 };
                 await _log.LogInfoAsync($"Seleccionando periodo: {periodText}...");
+                // Log what's visible BEFORE attempting to click (useful for debugging)
+                await LogVisibleOptionsAsync(page, "pre-periodo");
                 var countBeforePeriod = await GetMessageCountAsync(page);
                 if (!await ClickButtonInRecentMessagesAsync(page, periodText, 30000, 5))
                 {
-                    // Try alternative text
-                    var altText = config.PreferredPeriod switch
+                    // Try alternative text patterns
+                    var altTexts = config.PreferredPeriod switch
                     {
-                        "Mañana" => "mañana",
-                        "Tarde" => "tarde",
-                        "Noche" => "noche",
-                        _ => "noche"
+                        "Mañana" => new[] { "mañana", "Mañana", "MAÑANA", "Turno Mañana" },
+                        "Tarde" => new[] { "tarde", "Tarde", "TARDE", "Turnos Tarde" },
+                        "Noche" => new[] { "noche", "Noche", "NOCHE", "Turnos Noche" },
+                        _ => new[] { "noche", "Noche" }
                     };
-                    if (!await ClickButtonInRecentMessagesAsync(page, altText, 5000))
+
+                    var found = false;
+                    foreach (var alt in altTexts)
                     {
-                        await _log.LogErrorAsync($"No se encontro el boton del periodo '{periodText}'");
-                        await LogVisibleOptionsAsync(page, "periodo");
-                        await _appState.UpdateStatusAsync(DaemonStatus.Error, "Periodo no encontrado");
-                        return false;
+                        if (await ClickButtonInRecentMessagesAsync(page, alt, 3000))
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found)
+                    {
+                        // Last resort: extra scroll + longer wait + retry
+                        await _log.LogWarningAsync("Periodo no encontrado en primer intento. Scrolleando y reintentando...");
+                        await ScrollToBottomAsync(page);
+                        await Task.Delay(5000);
+                        await ScrollToBottomAsync(page);
+
+                        if (!await ClickButtonInRecentMessagesAsync(page, periodText, 15000, 3))
+                        {
+                            await _log.LogErrorAsync($"No se encontro el boton del periodo '{periodText}'");
+                            await LogVisibleOptionsAsync(page, "periodo");
+                            await _appState.UpdateStatusAsync(DaemonStatus.Error, "Periodo no encontrado");
+                            return false;
+                        }
                     }
                 }
                 await _log.LogSuccessAsync($"Periodo seleccionado: {config.PreferredPeriod}");
@@ -1424,24 +1449,62 @@ public class WhatsAppAutomationService : IAsyncDisposable
     {
         try
         {
+            // Scope to #main (chat area) to avoid toolbar/sidebar noise
             var options = await page.EvaluateAsync<string[]>(@"() => {
+                const main = document.querySelector('#main');
+                const container = main || document;
                 const results = [];
-                const spans = document.querySelectorAll('span');
-                for (const span of [...spans].slice(-50)) {
-                    const text = span.textContent.trim();
-                    if (text && text.length > 0 && text.length < 80) {
-                        const rect = span.getBoundingClientRect();
-                        if (rect.width > 0 && rect.height > 0) {
+
+                // 1. Check for button-like elements in recent messages
+                const messages = main ? [...main.querySelectorAll('[class*=""message-in""]')].slice(-10) : [];
+                for (const msg of messages) {
+                    // Interactive list buttons
+                    const buttons = msg.querySelectorAll('[role=""button""], button, [data-testid*=""btn""]');
+                    for (const btn of buttons) {
+                        const text = btn.textContent.trim();
+                        if (text && text.length > 1 && text.length < 100) {
+                            results.push('🔘 ' + text);
+                        }
+                    }
+                    // Span text content
+                    const spans = msg.querySelectorAll('span');
+                    for (const span of spans) {
+                        const text = span.textContent.trim();
+                        if (text && text.length > 1 && text.length < 100) {
                             results.push(text);
                         }
                     }
                 }
-                return [...new Set(results)].slice(-20);
+
+                // 2. Check for list popup (if open)
+                const listItems = document.querySelectorAll('[role=""listitem""], [role=""option""], [data-testid=""list-msg-item""]');
+                for (const item of listItems) {
+                    const text = item.textContent.trim();
+                    if (text && text.length > 1 && text.length < 100) {
+                        results.push('📋 ' + text);
+                    }
+                }
+
+                // 3. Fallback: last spans in #main
+                if (results.length === 0 && main) {
+                    const allSpans = main.querySelectorAll('span');
+                    for (const span of [...allSpans].slice(-30)) {
+                        const text = span.textContent.trim();
+                        if (text && text.length > 1 && text.length < 100) {
+                            const rect = span.getBoundingClientRect();
+                            if (rect.width > 0 && rect.height > 0) {
+                                results.push(text);
+                            }
+                        }
+                    }
+                }
+
+                return [...new Set(results)].slice(-25);
             }");
 
             if (options != null && options.Length > 0)
             {
-                await _log.LogInfoAsync($"DEBUG - Textos visibles en pantalla ({context}):");
+                await _log.LogInfoAsync($"DEBUG - Contenido visible en chat ({context}) [{options.Length} elementos]:");
                 foreach (var opt in options)
                 {
                     await _log.LogInfoAsync($"  > \"{opt}\"");
@@ -1449,7 +1512,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
             }
             else
             {
-                await _log.LogWarningAsync($"DEBUG - No se encontraron textos visibles para {context}.");
+                await _log.LogWarningAsync($"DEBUG - No se encontro contenido en el chat para {context}. Posible problema de scroll o carga.");
             }
         }
         catch (Exception ex)

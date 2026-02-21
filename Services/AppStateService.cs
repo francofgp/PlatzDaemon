@@ -30,7 +30,7 @@ public class AppStateService
         await _hubContext.Clients.All.SendAsync("StatusUpdate",
             State.Status.ToString(),
             State.LastResult ?? "",
-            State.NextRunTime?.ToString("HH:mm:ss") ?? "--:--:--");
+            State.NextRunTime?.ToString("o") ?? "");
     }
 
     public void SetNextRun(DateTime? nextRun)

@@ -49,6 +49,7 @@ public class BookingSchedulerService : BackgroundService
 
                 if (!config.Enabled)
                 {
+                    _appState.SetNextRun(null);
                     await _appState.UpdateStatusAsync(DaemonStatus.Idle, "Deshabilitado");
                     await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
                     continue;
