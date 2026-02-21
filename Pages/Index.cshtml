@@ -1,0 +1,119 @@
+﻿@page
+@model PlatzDaemon.Pages.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<pre class="ascii-art">
+  ____                _     ____                                  
+ / ___|___  _   _ _ __| |_  |  _ \  __ _  ___ _ __ ___   ___  _ __  
+| |   / _ \| | | | '__| __| | | | |/ _` |/ _ \ '_ ` _ \ / _ \| '_ \ 
+| |__| (_) | |_| | |  | |_  | |_| | (_| |  __/ | | | | | (_) | | | |
+ \____\___/ \__,_|_|   \__| |____/ \__,_|\___|_| |_| |_|\___/|_| |_|
+</pre>
+
+<div class="status-panel">
+    <div class="status-row">
+        <div class="status-item">
+            <div class="status-label">Estado</div>
+            <div class="status-value" id="statusText">
+                <span class="status-@Model.StatusCss">@Model.StatusText</span>
+            </div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">Proximo disparo</div>
+            <div class="countdown" id="countdown">@Model.NextRunDisplay</div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">Ultimo resultado</div>
+            <div class="status-value" id="lastResult">@(Model.LastResult ?? "---")</div>
+        </div>
+        <div class="status-item">
+            <div class="status-label">WhatsApp</div>
+            <div class="status-value">
+                <span class="session-dot @(Model.WhatsAppConnected ? "connected" : "disconnected")"></span>
+                @(Model.WhatsAppConnected ? "Conectado" : "Desconectado")
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="action-buttons mb-2">
+    <form method="post" asp-page-handler="ManualRun">
+        <button type="submit" class="btn btn-primary">[ Ejecutar ahora ]</button>
+    </form>
+    <form method="post" asp-page-handler="ClearLogs">
+        <button type="submit" class="btn btn-error">[ Limpiar logs ]</button>
+    </form>
+</div>
+
+<h3>Terminal de logs</h3>
+<div class="log-console" id="logConsole">
+    @foreach (var log in Model.Logs)
+    {
+        <div class="log-entry @log.CssClass">
+            <span class="log-time">[@log.FormattedTime]</span>
+            <span class="log-prefix">@log.Prefix</span>
+            <span>@log.Message</span>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    // SignalR connection for real-time logs
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/loghub")
+        .withAutomaticReconnect()
+        .build();
+
+    const logConsole = document.getElementById('logConsole');
+
+    connection.on("ReceiveLog", (time, prefix, message, cssClass) => {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry ' + cssClass;
+        entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-prefix">${prefix}</span> <span>${escapeHtml(message)}</span>`;
+        logConsole.appendChild(entry);
+        logConsole.scrollTop = logConsole.scrollHeight;
+    });
+
+    connection.on("StatusUpdate", (status, result, nextRun) => {
+        const statusEl = document.getElementById('statusText');
+        const resultEl = document.getElementById('lastResult');
+        const css = status.toLowerCase();
+        statusEl.innerHTML = `<span class="status-${css}">${status}</span>`;
+        if (result) resultEl.textContent = result;
+    });
+
+    connection.start().catch(err => console.error('SignalR Error:', err));
+
+    // Countdown timer
+    const nextRunStr = '@Model.NextRunIso';
+    if (nextRunStr && nextRunStr !== '') {
+        const nextRun = new Date(nextRunStr);
+        function updateCountdown() {
+            const now = new Date();
+            const diff = nextRun - now;
+            if (diff <= 0) {
+                document.getElementById('countdown').textContent = '00:00:00';
+                return;
+            }
+            const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+            const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+            const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+            document.getElementById('countdown').textContent = `${h}:${m}:${s}`;
+        }
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+    }
+
+    // Auto-scroll log console
+    logConsole.scrollTop = logConsole.scrollHeight;
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+}

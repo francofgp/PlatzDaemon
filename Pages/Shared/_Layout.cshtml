@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Platz Daemon</title>
+    <link rel="stylesheet" href="~/css/terminal.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="terminal">
+    <div class="container">
+        <header>
+            <div class="terminal-nav">
+                <div class="terminal-logo">
+                    <div class="logo terminal-prompt">
+                        <a href="/" class="no-style">Platz Daemon v1.0</a>
+                    </div>
+                </div>
+                <nav class="terminal-menu">
+                    <ul>
+                        <li><a asp-page="/Index" class="menu-item @(ViewContext.RouteData.Values["page"]?.ToString() == "/Index" ? "active" : "")">Dashboard</a></li>
+                        <li><a asp-page="/Config" class="menu-item @(ViewContext.RouteData.Values["page"]?.ToString() == "/Config" ? "active" : "")">Mi Reserva</a></li>
+                        <li><a asp-page="/Sistema" class="menu-item @(ViewContext.RouteData.Values["page"]?.ToString() == "/Sistema" ? "active" : "")">Sistema</a></li>
+                        <li><a asp-page="/Session" class="menu-item @(ViewContext.RouteData.Values["page"]?.ToString() == "/Session" ? "active" : "")">WhatsApp</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+
+        <main>
+            @RenderBody()
+        </main>
+
+        <footer>
+            <hr />
+            <p><small>Platz Daemon &copy; 2026 | Automatizacion de reservas de canchas | Terminal Mode</small></p>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

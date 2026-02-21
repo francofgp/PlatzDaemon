@@ -1,0 +1,87 @@
+@page
+@model PlatzDaemon.Pages.SessionModel
+@{
+    ViewData["Title"] = "WhatsApp Session";
+}
+
+<h2>/// WhatsApp Session</h2>
+<p class="text-muted">Gestiona tu sesion de WhatsApp Web para la automatizacion.</p>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="terminal-alert @Model.MessageCss">@Model.Message</div>
+}
+
+<p>
+    <span class="session-dot @(Model.IsConnected ? "connected" : "disconnected")"></span>
+    @if (Model.IsConnected)
+    {
+        <strong class="text-success">CONECTADO</strong>
+        <span class="text-muted"> - Sesion de WhatsApp Web activa</span>
+    }
+    else if (Model.IsBrowserOpen)
+    {
+        <strong class="text-warning">NAVEGADOR ABIERTO</strong>
+        <span class="text-muted"> - Escanea el codigo QR en la ventana del navegador</span>
+    }
+    else
+    {
+        <strong class="text-error">DESCONECTADO</strong>
+        <span class="text-muted"> - Necesitas conectar WhatsApp Web</span>
+    }
+</p>
+
+<div class="terminal-card">
+    <header># Instrucciones</header>
+    <div>
+        <ol>
+            <li>Haz click en <strong>"Conectar WhatsApp"</strong> para abrir una ventana del navegador.</li>
+            <li>Se abrira <strong>WhatsApp Web</strong> en una ventana de Chromium.</li>
+            <li>Escanea el <strong>codigo QR</strong> con tu telefono (WhatsApp > Dispositivos vinculados > Vincular dispositivo).</li>
+            <li>Una vez conectado, haz click en <strong>"Verificar sesion"</strong> para confirmar.</li>
+            <li>La sesion se guarda automaticamente. No necesitas repetir esto cada vez.</li>
+        </ol>
+    </div>
+</div>
+
+<div class="action-buttons mt-2">
+    @if (!Model.IsBrowserOpen)
+    {
+        <form method="post" asp-page-handler="Connect">
+            <button type="submit" class="btn btn-primary">[ Conectar WhatsApp ]</button>
+        </form>
+    }
+    else
+    {
+        <form method="post" asp-page-handler="CheckSession">
+            <button type="submit" class="btn btn-primary">[ Verificar sesion ]</button>
+        </form>
+    }
+
+    @if (Model.IsBrowserOpen)
+    {
+        <form method="post" asp-page-handler="Disconnect">
+            <button type="submit" class="btn btn-error">[ Desconectar ]</button>
+        </form>
+    }
+</div>
+
+<div class="terminal-card mt-2">
+    <header># Informacion de sesion</header>
+    <div>
+        <table>
+            <tr>
+                <td class="text-muted">Datos de sesion guardados en:</td>
+                <td><code>Data/browser-data/</code></td>
+            </tr>
+            <tr>
+                <td class="text-muted">Navegador:</td>
+                <td>Chromium (Playwright)</td>
+            </tr>
+            <tr>
+                <td class="text-muted">Sesion persistente:</td>
+                <td>@(System.IO.Directory.Exists(Model.BrowserDataPath) && System.IO.Directory.GetFiles(Model.BrowserDataPath).Length > 0 ? "Si (datos encontrados)" : "No (primera vez)")</td>
+            </tr>
+        </table>
+    </div>
+</div>

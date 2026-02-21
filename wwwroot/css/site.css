@@ -1,0 +1,118 @@
+/* Green phosphor terminal theme - only override what differs from terminal.css defaults */
+:root {
+    --background-color: #0a0a0a;
+    --font-color: #33ff33;
+    --invert-font-color: #0a0a0a;
+    --secondary-color: #20a020;
+    --tertiary-color: #20a020;
+    --primary-color: #33ff33;
+    --error-color: #ff3333;
+    --progress-bar-background: #1a1a1a;
+    --progress-bar-fill: #33ff33;
+    --code-bg-color: #141414;
+    --block-background-color: #0d0d0d;
+}
+
+/* === Fixes for terminal.css gaps === */
+
+/* terminal.css styles input,textarea but forgets select */
+select, option {
+    background-color: var(--background-color);
+    color: var(--font-color);
+}
+
+/* terminal.css only styles email/text/number/password/search, not time/date */
+input[type=time], input[type=date] {
+    border: 1px var(--input-style) var(--font-color);
+    width: 100%;
+    padding: .7em .5em;
+    font-size: 1em;
+    font-family: var(--font-stack);
+    appearance: none;
+    border-radius: 0;
+}
+
+/* secondary-color as card header bg has low contrast in monochrome green theme */
+.terminal-card > header {
+    background-color: var(--primary-color);
+}
+
+/* === App-specific components (no terminal.css equivalent) === */
+
+/* Log console */
+.log-console {
+    background: var(--block-background-color);
+    border: 1px solid #33ff3330;
+    padding: 12px;
+    height: 400px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.log-entry { margin: 0; padding: 1px 0; white-space: pre-wrap; word-break: break-word; }
+.log-info { color: var(--primary-color); }
+.log-success { color: #00ff88; font-weight: bold; }
+.log-warning { color: #ffcc00; }
+.log-error { color: var(--error-color); font-weight: bold; }
+.log-time { color: var(--secondary-color); }
+.log-prefix { font-weight: bold; }
+
+/* Dashboard status panel */
+.status-panel { border: 1px solid #33ff3330; padding: 16px; margin-bottom: 20px; }
+.status-row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+.status-item { flex: 1; min-width: 150px; }
+.status-label { color: var(--secondary-color); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.status-value { font-weight: bold; margin-top: 4px; }
+.status-idle { color: var(--secondary-color); }
+.status-waiting { color: #00ccff; }
+.status-running { color: #ffcc00; }
+.status-completed { color: #00ff88; }
+.status-error { color: var(--error-color); }
+
+/* Countdown timer */
+.countdown { font-size: 2em; font-weight: bold; text-align: center; letter-spacing: 4px; }
+
+/* Tag system (config page) */
+.tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tag { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #33ff3340; padding: 3px 10px; font-size: 13px; }
+.tag .tag-remove { cursor: pointer; color: var(--error-color); font-weight: bold; }
+.tag-input-group { display: flex; gap: 6px; margin-top: 6px; }
+
+/* Session connection dot */
+.session-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.session-dot.connected { background-color: #00ff88; }
+.session-dot.disconnected { background-color: var(--error-color); }
+
+/* ASCII art */
+.ascii-art { color: var(--primary-color); font-size: 10px; line-height: 1.1; overflow-x: auto; }
+
+/* Field help text */
+.field-help {
+    color: var(--secondary-color);
+    font-size: 12px;
+    margin-top: 4px;
+    margin-bottom: 0;
+    line-height: 1.4;
+    font-style: italic;
+}
+
+/* Layout helpers */
+.action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+.toggle-group { display: flex; align-items: center; gap: 10px; }
+
+/* Utilities */
+.text-muted { color: var(--secondary-color); }
+.text-success { color: #00ff88; }
+.text-error { color: var(--error-color); }
+.text-warning { color: #ffcc00; }
+.mt-1 { margin-top: 8px; }
+.mt-2 { margin-top: 16px; }
+.mb-2 { margin-bottom: 16px; }
+
+@media (max-width: 768px) {
+    .status-row { flex-direction: column; }
+    .countdown { font-size: 1.5em; }
+    .log-console { height: 300px; }
+    .ascii-art { font-size: 7px; }
+}

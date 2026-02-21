@@ -1,0 +1,201 @@
+@page
+@model PlatzDaemon.Pages.ConfigModel
+@{
+    ViewData["Title"] = "Mi Reserva";
+}
+
+<h2>/// Mi Reserva</h2>
+<p class="text-muted">Configura que cancha, horario y tipo de juego queres reservar.</p>
+
+@if (Model.SavedOk)
+{
+    <div class="terminal-alert terminal-alert-primary">Preferencias de reserva guardadas exitosamente.</div>
+}
+
+<form method="post">
+    <div class="terminal-card">
+        <header># Preferencias de reserva</header>
+        <div>
+            <div class="form-group">
+                <label asp-for="PreferredPeriod">Periodo preferido</label>
+                <select asp-for="PreferredPeriod">
+                    <option value="Mañana">Mañana</option>
+                    <option value="Tarde">Tarde</option>
+                    <option value="Noche">Noche</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="GameType">Tipo de juego</label>
+                <select asp-for="GameType">
+                    <option value="Single">Single</option>
+                    <option value="Doble">Doble</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="BookingDay">Dia de reserva</label>
+                <select asp-for="BookingDay">
+                    <option value="Hoy">Hoy</option>
+                    <option value="Mañana">Mañana</option>
+                </select>
+                <p class="field-help">Selecciona "Hoy" si el club habilita turnos el mismo dia (ej: disparo a las 8 AM para jugar hoy). Selecciona "Mañana" si habilita turnos con anticipacion (ej: queres jugar el viernes a las 19:00, configuras disparo a las 00:00 del jueves con dia "Mañana").</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="terminal-card">
+        <header># Horarios prioritarios</header>
+        <div>
+            <p class="field-help">Ordenados por prioridad. El sistema intentara reservar el primer horario disponible de la lista. Si NINGUNO esta disponible, se cancela la reserva. Usa el formato que muestra el bot: <strong>HH:MMhs</strong> (ej: 18:00hs, 17:30hs).</p>
+
+            <div class="tag-list" id="timeSlotTags">
+                @for (int i = 0; i < Model.PreferredTimeSlots.Count; i++)
+                {
+                    <div class="tag">
+                        <input type="hidden" name="PreferredTimeSlots" value="@Model.PreferredTimeSlots[i]" />
+                        @Model.PreferredTimeSlots[i]
+                        <span class="tag-remove" onclick="this.parentElement.remove()">&times;</span>
+                    </div>
+                }
+            </div>
+            <div class="tag-input-group mt-1">
+                <input type="text" id="newTimeSlot" placeholder="ej: 18:00hs" style="max-width:150px" />
+                <button type="button" class="btn btn-primary" onclick="addTimeSlot()">+ Agregar</button>
+            </div>
+            <p class="field-help" id="timeSlotError" style="color: #ff5555; display: none;"></p>
+        </div>
+    </div>
+
+    <div class="terminal-card">
+        <header># Canchas prioritarias</header>
+        <div>
+            <p class="field-help">Ordenadas por prioridad. El sistema intentara reservar la primera cancha disponible de la lista. Si ninguna esta disponible, se toma la primera disponible que encuentre.</p>
+
+            <div class="tag-list" id="courtTags">
+                @for (int i = 0; i < Model.PreferredCourts.Count; i++)
+                {
+                    <div class="tag">
+                        <input type="hidden" name="PreferredCourts" value="@Model.PreferredCourts[i]" />
+                        @Model.PreferredCourts[i]
+                        <span class="tag-remove" onclick="this.parentElement.remove()">&times;</span>
+                    </div>
+                }
+            </div>
+            <div class="tag-input-group mt-1">
+                <input type="text" id="newCourt" placeholder="ej: Cancha 6" style="max-width:200px" />
+                <button type="button" class="btn btn-primary" onclick="addCourt()">+ Agregar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-buttons mt-2">
+        <button type="submit" class="btn btn-primary">[ Guardar reserva ]</button>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+    function addTag(containerId, inputName, value) {
+        const container = document.getElementById(containerId);
+        const tag = document.createElement('div');
+        tag.className = 'tag';
+        tag.innerHTML = `<input type="hidden" name="${inputName}" value="${escapeHtml(value)}" /> ${escapeHtml(value)} <span class="tag-remove" onclick="this.parentElement.remove()">&times;</span>`;
+        container.appendChild(tag);
+    }
+
+    function addCourt() {
+        const input = document.getElementById('newCourt');
+        const value = input.value.trim();
+        if (!value) return;
+
+        addTag('courtTags', 'PreferredCourts', value);
+        input.value = '';
+        input.focus();
+    }
+
+    /**
+     * Validates and normalizes time slot input to HH:MMhs format.
+     * Accepts: "18:00", "18:00hs", "8:00", "8:00hs"
+     * Rejects: "25:00", "abc", "18:60", etc.
+     */
+    function parseTimeSlot(raw) {
+        let val = raw.trim().toLowerCase();
+        // Remove "hs" suffix if present for validation
+        val = val.replace(/hs$/, '');
+
+        // Match HH:MM or H:MM
+        const match = val.match(/^(\d{1,2}):(\d{2})$/);
+        if (!match) return null;
+
+        const hours = parseInt(match[1], 10);
+        const minutes = parseInt(match[2], 10);
+
+        if (hours < 0 || hours > 23) return null;
+        if (minutes < 0 || minutes > 59) return null;
+
+        // Format as HH:MMhs (always two-digit hour)
+        const hh = hours.toString().padStart(2, '0');
+        const mm = minutes.toString().padStart(2, '0');
+        return `${hh}:${mm}hs`;
+    }
+
+    function addTimeSlot() {
+        const input = document.getElementById('newTimeSlot');
+        const errorEl = document.getElementById('timeSlotError');
+        const raw = input.value.trim();
+        if (!raw) return;
+
+        const formatted = parseTimeSlot(raw);
+        if (!formatted) {
+            errorEl.textContent = `Formato invalido: "${raw}". Usa HH:MMhs (ej: 18:00hs, 09:30hs).`;
+            errorEl.style.display = 'block';
+            input.focus();
+            input.select();
+            return;
+        }
+
+        // Check for duplicates
+        const existing = document.querySelectorAll('#timeSlotTags input[name="PreferredTimeSlots"]');
+        for (const inp of existing) {
+            if (inp.value === formatted) {
+                errorEl.textContent = `El horario ${formatted} ya esta en la lista.`;
+                errorEl.style.display = 'block';
+                input.value = '';
+                input.focus();
+                return;
+            }
+        }
+
+        errorEl.style.display = 'none';
+        addTag('timeSlotTags', 'PreferredTimeSlots', formatted);
+        input.value = '';
+        input.focus();
+    }
+
+    document.getElementById('newTimeSlot').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addTimeSlot();
+        }
+    });
+
+    // Clear error when user starts typing
+    document.getElementById('newTimeSlot').addEventListener('input', function() {
+        document.getElementById('timeSlotError').style.display = 'none';
+    });
+
+    document.getElementById('newCourt').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addCourt();
+        }
+    });
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+}

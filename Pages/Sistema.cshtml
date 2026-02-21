@@ -1,0 +1,63 @@
+@page
+@model PlatzDaemon.Pages.SistemaModel
+@{
+    ViewData["Title"] = "Sistema";
+}
+
+<h2>/// Sistema</h2>
+<p class="text-muted">Configuracion del sistema y datos del socio. Estos valores rara vez cambian una vez configurados.</p>
+
+@if (Model.SavedOk)
+{
+    <div class="terminal-alert terminal-alert-primary">Configuracion del sistema guardada exitosamente.</div>
+}
+
+<form method="post">
+    <div class="terminal-card">
+        <header># Automatizacion</header>
+        <div>
+            <div class="form-group">
+                <div class="toggle-group">
+                    <input type="checkbox" asp-for="Enabled" />
+                    <label asp-for="Enabled">Automatizacion habilitada</label>
+                </div>
+                <p class="field-help">Si esta activado, el daemon intentara reservar automaticamente a la hora de disparo configurada. Si esta desactivado, solo se podra ejecutar manualmente desde el Dashboard.</p>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="TriggerTime">Hora de disparo (HH:mm, hora Argentina)</label>
+                <input type="time" asp-for="TriggerTime" />
+                <p class="field-help">Hora exacta a la que se ejecutara la reserva automatica. Generalmente es cuando el club habilita los turnos del dia (ej: 08:00).</p>
+            </div>
+
+            <div class="form-group">
+                <div class="toggle-group">
+                    <input type="checkbox" asp-for="CompetitiveMode" />
+                    <label asp-for="CompetitiveMode">Modo competitivo</label>
+                </div>
+                <p class="field-help">Pre-carga el chat del bot 20 segundos antes de la hora de disparo y envia el mensaje en el milisegundo exacto. Ideal si hay mucha competencia por las canchas.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="terminal-card">
+        <header># Datos del socio</header>
+        <div>
+            <div class="form-group">
+                <label asp-for="BotPhoneNumber">Numero del bot (sin +)</label>
+                <input type="text" asp-for="BotPhoneNumber" placeholder="93534407576" />
+                <p class="field-help">Numero de WhatsApp del bot del club, sin el signo +. Este valor te lo proporciona tu club.</p>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Dni">DNI del socio</label>
+                <input type="text" asp-for="Dni" placeholder="12345678" />
+                <p class="field-help">Numero de documento que el bot del club solicita para identificarte.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-buttons mt-2">
+        <button type="submit" class="btn btn-primary">[ Guardar sistema ]</button>
+    </div>
+</form>

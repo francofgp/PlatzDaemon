@@ -1,0 +1,71 @@
+# ========================================
+# PlatzDaemon – .gitignore
+# ========================================
+
+# ── .NET Build output ──
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Ll]og/
+[Ll]ogs/
+
+# ── NuGet ──
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+# ── Visual Studio / Rider / VS Code ──
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.rsuser
+.idea/
+*.DotSettings.user
+
+# ── Cursor IDE ──
+.cursor/
+
+# ── Publish / Deploy ──
+publish/
+*.exe
+*.dll
+*.pdb
+*.app
+
+# ── User secrets & local settings ──
+appsettings.*.json
+!appsettings.json
+launchSettings.json
+
+# ── Playwright browser data (sesión WhatsApp) ──
+Data/browser-data/
+
+# ── Config local del usuario ──
+Data/config.json
+
+# ── OS files ──
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+*~
+
+# ── Archivos de referencia / desarrollo ──
+terminal.css.documentacion.md
+terminalcss.html
+
+# ── Release zips ──
+*.zip
