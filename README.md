@@ -106,7 +106,7 @@ Dejá la computadora prendida (no suspendida). El programa se va a encargar de r
 
 ```bash
 git clone <url-del-repositorio>
-cd court-daemon/PlatzDaemon
+cd court-daemon
 dotnet build
 ```
 
@@ -136,14 +136,24 @@ dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=
 
 El resultado queda en `bin/Release/net10.0-windows/win-x64/publish/`. Para distribuir, comprimir esa carpeta en un ZIP y subirla a GitHub Releases.
 
-### Crear un Release en GitHub
+### Crear un Release en GitHub (automático)
 
-1. Ir al repositorio en GitHub → pestaña **"Releases"** → **"Draft a new release"**.
-2. Crear un tag (ej: `v1.0.0`), ponerle un título y descripción.
-3. En **"Attach binaries"**, arrastrar el archivo ZIP generado.
-4. Click en **"Publish release"**.
+El proyecto incluye un **GitHub Action** que compila y publica el EXE automáticamente. Solo tenés que crear un tag:
 
-Los usuarios pueden descargarlo directamente desde esa página sin necesidad de instalar Git, .NET, ni nada.
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Esto dispara el workflow `.github/workflows/release.yml` que:
+1. Compila el proyecto en `windows-latest`.
+2. Genera el EXE self-contained.
+3. Lo empaqueta en `PlatzDaemon-v1.0.0-win-x64.zip`.
+4. Crea el Release en GitHub con el ZIP listo para descargar.
+
+Para la próxima versión: `git tag v1.1.0 && git push origin v1.1.0`, y así.
+
+> 💡 También podés crear un Release manual desde GitHub: pestaña **"Releases"** → **"Draft a new release"** → subir el ZIP manualmente.
 
 ---
 

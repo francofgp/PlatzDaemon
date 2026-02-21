@@ -1,0 +1,48 @@
+name: 🎾 Publicar Release
+
+# Se dispara cuando pusheas un tag con formato v*.*.*
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+
+      - name: 🔧 Instalar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: 📦 Publicar EXE (self-contained, single-file)
+        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish
+
+      - name: 🗜️ Empaquetar en ZIP
+        run: Compress-Archive -Path ./publish/* -DestinationPath ./PlatzDaemon-${{ github.ref_name }}-win-x64.zip
+
+      - name: 🚀 Crear Release en GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "PlatzDaemon ${{ github.ref_name }}"
+          body: |
+            ## 🎾 PlatzDaemon ${{ github.ref_name }}
+
+            ### Descarga e instalación
+            1. Descargá el archivo `.zip` de abajo
+            2. Extraelo en una carpeta
+            3. Ejecutá `PlatzDaemon.exe`
+            4. Se abre en `http://localhost:5000`
+
+            > ⚠️ La primera vez Windows SmartScreen puede mostrar una advertencia.
+            > Hacé click en "Más información" → "Ejecutar de todas formas".
+          files: ./PlatzDaemon-${{ github.ref_name }}-win-x64.zip
+          draft: false
+          prerelease: false
