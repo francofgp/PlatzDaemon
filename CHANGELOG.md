@@ -7,6 +7,10 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Fixed
+- **README**: corregido nombre del proyecto `court-daemon` → `PlatzDaemon` en instrucciones de instalación y estructura del proyecto.
+- **README**: agregado comando alternativo con `powershell` para instalar Playwright.
+
 ## [1.3.0] - 2026-02-22
 
 ### Added

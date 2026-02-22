@@ -122,7 +122,7 @@ Dejá la computadora prendida (no suspendida). El programa se va a encargar de r
 
 ```bash
 git clone <url-del-repositorio>
-cd court-daemon
+cd PlatzDaemon
 dotnet build
 ```
 
@@ -132,7 +132,11 @@ dotnet build
 pwsh bin/Debug/net10.0-windows/win-x64/playwright.ps1 install chromium
 ```
 
-> Si no tenés `pwsh`, usá `powershell` en su lugar.
+Si no tenés `pwsh`, usá `powershell`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File bin/Debug/net10.0-windows/win-x64/playwright.ps1 install chromium
+```
 
 #### 3. Ejecutar la aplicación
 
@@ -197,7 +201,7 @@ Para la próxima versión: `git tag v1.1.0 && git push origin v1.1.0`, y así.
 ## Estructura del proyecto
 
 ```
-court-daemon/
+PlatzDaemon/
 ├── .github/workflows/        # GitHub Actions
 │   ├── ci.yml                # CI: build + tests + coverage
 │   └── release.yml           # Build, test & publish automático
