@@ -12,7 +12,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Config UI**: texto de ayuda bajo "Periodo preferido" indicando que el sistema busca automáticamente en otros periodos.
 
 ### Changed
-- **Dashboard WhatsApp**: ahora muestra tres estados en vez de dos: 🟢 "Conectado" (navegador activo con sesión verificada), 🟡 "Sesión guardada" (datos de sesión guardados de una ejecución anterior, se reconecta automáticamente) y 🔴 "Desconectado" (primera vez, necesita escanear QR).
+- **Estado WhatsApp (Dashboard + Session)**: ahora muestra tres estados en vez de dos: 🟢 "Conectado" (navegador activo con sesión verificada), 🟡 "Sesión guardada" (datos de sesión guardados de una ejecución anterior, se reconecta automáticamente al ejecutar) y 🔴 "Desconectado" (primera vez, necesita escanear QR). Aplica tanto al Dashboard como a la página `/Session`.
 
 ### Fixed
 - **Reloj de próximo disparo no se actualizaba al cambiar la hora**: el scheduler quedaba atrapado en un `Task.Delay` largo y no reaccionaba a cambios de configuración. Ahora usa un `CancellationTokenSource` que se interrumpe al guardar en `/sistema`, recalculando inmediatamente el próximo disparo, la cuenta regresiva y la hora de pre-carga.

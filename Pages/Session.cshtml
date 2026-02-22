@@ -13,19 +13,27 @@
 }
 
 <p>
-    <span class="session-dot @(Model.IsConnected ? "connected" : "disconnected")"></span>
     @if (Model.IsConnected)
     {
+        <span class="session-dot connected"></span>
         <strong class="text-success">CONECTADO</strong>
         <span class="text-muted"> - Sesion de WhatsApp Web activa</span>
     }
     else if (Model.IsBrowserOpen)
     {
+        <span class="session-dot saved"></span>
         <strong class="text-warning">NAVEGADOR ABIERTO</strong>
         <span class="text-muted"> - Escanea el codigo QR en la ventana del navegador</span>
     }
+    else if (Model.HasSavedSession)
+    {
+        <span class="session-dot saved"></span>
+        <strong class="text-warning">SESION GUARDADA</strong>
+        <span class="text-muted"> - Datos de sesion disponibles. Se reconecta automaticamente al ejecutar.</span>
+    }
     else
     {
+        <span class="session-dot disconnected"></span>
         <strong class="text-error">DESCONECTADO</strong>
         <span class="text-muted"> - Necesitas conectar WhatsApp Web</span>
     }

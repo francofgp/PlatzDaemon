@@ -12,6 +12,7 @@ public class SessionModel : PageModel
 
     public bool IsConnected { get; set; }
     public bool IsBrowserOpen { get; set; }
+    public bool HasSavedSession { get; set; }
     public string? Message { get; set; }
     public string MessageCss { get; set; } = "";
     public string BrowserDataPath { get; set; } = "";
@@ -75,6 +76,7 @@ public class SessionModel : PageModel
     {
         IsConnected = _appState.State.WhatsAppConnected;
         IsBrowserOpen = _whatsApp.IsSessionActive;
+        HasSavedSession = _whatsApp.HasSavedSessionData;
         BrowserDataPath = Path.Combine(_env.ContentRootPath, "Data", "browser-data");
     }
 }
