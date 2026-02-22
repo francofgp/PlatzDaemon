@@ -11,6 +11,7 @@ public class IndexModel : PageModel
     private readonly AppStateService _appState;
     private readonly BookingSchedulerService _scheduler;
     private readonly IConfigStore _configStore;
+    private readonly WhatsAppAutomationService _whatsApp;
 
     public IReadOnlyList<LogEntry> Logs { get; set; } = Array.Empty<LogEntry>();
     public string StatusText { get; set; } = "IDLE";
@@ -20,6 +21,7 @@ public class IndexModel : PageModel
     public string NextRunIso { get; set; } = "";
     public bool IsCountdownDisabled { get; set; }
     public bool WhatsAppConnected { get; set; }
+    public bool HasSavedSession { get; set; }
 
     // Config summary
     public string GameType { get; set; } = "";
@@ -28,12 +30,13 @@ public class IndexModel : PageModel
     public string TimeSlots { get; set; } = "";
     public string Courts { get; set; } = "";
 
-    public IndexModel(LogStore logStore, AppStateService appState, BookingSchedulerService scheduler, IConfigStore configStore)
+    public IndexModel(LogStore logStore, AppStateService appState, BookingSchedulerService scheduler, IConfigStore configStore, WhatsAppAutomationService whatsApp)
     {
         _logStore = logStore;
         _appState = appState;
         _scheduler = scheduler;
         _configStore = configStore;
+        _whatsApp = whatsApp;
     }
 
     public void OnGet()
@@ -53,6 +56,7 @@ public class IndexModel : PageModel
         StatusCss = state.Status.ToString().ToLower();
         LastResult = state.LastResult;
         WhatsAppConnected = state.WhatsAppConnected;
+        HasSavedSession = _whatsApp.HasSavedSessionData;
 
         if (state.NextRunTime.HasValue)
         {

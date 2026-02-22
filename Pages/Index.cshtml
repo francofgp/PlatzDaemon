@@ -31,8 +31,18 @@
         <div class="status-item">
             <div class="status-label">WhatsApp</div>
             <div class="status-value">
-                <span class="session-dot @(Model.WhatsAppConnected ? "connected" : "disconnected")"></span>
-                @(Model.WhatsAppConnected ? "Conectado" : "Desconectado")
+                @if (Model.WhatsAppConnected)
+                {
+                    <span class="session-dot connected"></span> @:Conectado
+                }
+                else if (Model.HasSavedSession)
+                {
+                    <span class="session-dot saved"></span> @:Sesion guardada
+                }
+                else
+                {
+                    <span class="session-dot disconnected"></span> @:Desconectado
+                }
             </div>
         </div>
     </div>

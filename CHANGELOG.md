@@ -11,6 +11,9 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Busqueda dinámica de periodos**: el sistema ahora busca los horarios preferidos en TODOS los periodos disponibles (Mañana, Tarde, Noche), no solo en el periodo configurado. Empieza por el periodo preferido y, si no encuentra horarios, cierra el popup con Escape y prueba el siguiente periodo automáticamente.
 - **Config UI**: texto de ayuda bajo "Periodo preferido" indicando que el sistema busca automáticamente en otros periodos.
 
+### Changed
+- **Dashboard WhatsApp**: ahora muestra tres estados en vez de dos: 🟢 "Conectado" (navegador activo con sesión verificada), 🟡 "Sesión guardada" (datos de sesión guardados de una ejecución anterior, se reconecta automáticamente) y 🔴 "Desconectado" (primera vez, necesita escanear QR).
+
 ### Fixed
 - **Reloj de próximo disparo no se actualizaba al cambiar la hora**: el scheduler quedaba atrapado en un `Task.Delay` largo y no reaccionaba a cambios de configuración. Ahora usa un `CancellationTokenSource` que se interrumpe al guardar en `/sistema`, recalculando inmediatamente el próximo disparo, la cuenta regresiva y la hora de pre-carga.
 - **Selectores de radio buttons**: corregida selección de horarios en popup — ahora usa `aria-label` del `[role="radio"]` en vez de `textContent` (que contenía texto del SVG, no el horario). Agregado fallback por `[role="gridcell"]` con búsqueda del radio asociado en la misma fila.

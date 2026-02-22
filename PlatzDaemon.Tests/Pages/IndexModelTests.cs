@@ -33,7 +33,7 @@ public class IndexModelTests
         var whatsApp = new WhatsAppAutomationService(env, _logStore, _configStore, notification, _appState);
         var scheduler = new BookingSchedulerService(_configStore, whatsApp, _logStore, _appState, notification);
 
-        _model = new IndexModel(_logStore, _appState, scheduler, _configStore);
+        _model = new IndexModel(_logStore, _appState, scheduler, _configStore, whatsApp);
     }
 
     [Fact]

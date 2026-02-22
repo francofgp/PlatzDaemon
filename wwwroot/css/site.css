@@ -83,6 +83,7 @@ input[type=time], input[type=date] {
 /* Session connection dot */
 .session-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 .session-dot.connected { background-color: #00ff88; }
+.session-dot.saved { background-color: #ffcc00; }
 .session-dot.disconnected { background-color: var(--error-color); }
 
 /* ASCII art */

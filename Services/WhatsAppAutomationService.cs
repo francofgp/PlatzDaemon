@@ -21,6 +21,23 @@ public class WhatsAppAutomationService : IAsyncDisposable
 
     public bool IsSessionActive => _browserContext != null;
 
+    /// <summary>
+    /// Returns true if there is saved browser data from a previous session (cookies, local storage, etc.).
+    /// This means the session can likely be restored without scanning a new QR code.
+    /// </summary>
+    public bool HasSavedSessionData
+    {
+        get
+        {
+            try
+            {
+                return Directory.Exists(_browserDataPath)
+                    && Directory.GetFiles(_browserDataPath, "*", SearchOption.AllDirectories).Length > 0;
+            }
+            catch { return false; }
+        }
+    }
+
     public WhatsAppAutomationService(
         IWebHostEnvironment env,
         LogStore log,
