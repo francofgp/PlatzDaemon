@@ -1,12 +1,20 @@
-# 🎾 Platz Daemon
+<p align="center">
+  <img src="assets/logo.png" alt="PlatzDaemon" width="300">
+</p>
 
-**Automatización de reservas de canchas de tenis vía WhatsApp**
+<h1 align="center">Platz Daemon</h1>
+
+<p align="center">
+  <strong>Automatización de reservas de canchas de tenis vía WhatsApp</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/ASP.NET%20Core-10.0-purple" alt="ASP.NET Core">
+  <img src="https://img.shields.io/badge/Playwright-1.51-green" alt="Playwright">
+  <img src="https://img.shields.io/badge/Platform-Windows%20x64-blue" alt="Platform">
+</p>
 
 Platz Daemon es una aplicación de escritorio que automatiza el proceso de reserva de canchas de tenis a través del bot de WhatsApp de tu club. Se ejecuta como un servidor local con interfaz web retro estilo terminal de los '90.
-
-![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-10.0-purple)
-![Playwright](https://img.shields.io/badge/Playwright-1.51-green)
-![Platform](https://img.shields.io/badge/Platform-Windows%20x64-blue)
 
 ---
 
@@ -64,6 +72,8 @@ Ya no necesitás despertarte a las 8 AM ni competir manualmente por las canchas.
 5. Esperá unos segundos y hacé click en **"Verificar sesión"** para confirmar.
 
 > ✅ La sesión se guarda. **No necesitás escanear el QR cada vez** que abrís la app.
+>
+> 🖥️ **Nota**: al ejecutar la reserva, se abre una ventana de **Chromium** (es necesario, WhatsApp bloquea navegadores invisibles). Podés cerrarla si querés; se re-abre sola la próxima vez.
 
 ### Paso 5 — Configurar tu reserva
 
@@ -76,6 +86,8 @@ Ya no necesitás despertarte a las 8 AM ni competir manualmente por las canchas.
 Dejá la computadora prendida (no suspendida). El programa se va a encargar de reservar la cancha automáticamente a la hora que configuraste. Podés ver el estado en tiempo real en el **Dashboard**.
 
 > 💡 **Tip**: podés cerrar la pestaña del navegador tranquilo, el programa sigue corriendo. Podés volver a entrar a **http://localhost:5000** cuando quieras para ver cómo va. Lo que **no** tenés que cerrar es la ventana de consola negra.
+>
+> 🖥️ **Sobre la ventana de Chromium**: cuando se ejecuta la reserva, se abre una ventana de Chromium automáticamente. Si la cerrás, no pasa nada: se vuelve a abrir sola en la próxima ejecución. No perdés la sesión de WhatsApp.
 
 ### Resumen rápido
 

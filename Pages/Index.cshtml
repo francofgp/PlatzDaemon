@@ -38,13 +38,21 @@
     </div>
 </div>
 
-<div class="action-buttons mb-2">
-    <form method="post" asp-page-handler="ManualRun">
-        <button type="submit" class="btn btn-primary">[ Ejecutar ahora ]</button>
-    </form>
-    <form method="post" asp-page-handler="ClearLogs">
-        <button type="submit" class="btn btn-error">[ Limpiar logs ]</button>
-    </form>
+<div class="dashboard-actions mb-2">
+    <div class="actions-col">
+        <form method="post" asp-page-handler="ManualRun">
+            <button type="submit" class="btn btn-primary">[ Ejecutar ahora ]</button>
+        </form>
+        <form method="post" asp-page-handler="ClearLogs">
+            <button type="submit" class="btn btn-error">[ Limpiar logs ]</button>
+        </form>
+    </div>
+    <div class="config-summary">
+        <div class="summary-line"><span class="summary-icon">🎾</span> @Model.GameType · @Model.PreferredPeriod · @Model.BookingDay</div>
+        <div class="summary-line"><span class="summary-icon">⏰</span> @Model.TimeSlots</div>
+        <div class="summary-line"><span class="summary-icon">🏟</span> @Model.Courts</div>
+        <a href="/Config" class="summary-edit">[ editar → ]</a>
+    </div>
 </div>
 
 <h3>Terminal de logs</h3>

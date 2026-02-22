@@ -10,6 +10,7 @@ public class IndexModel : PageModel
     private readonly LogStore _logStore;
     private readonly AppStateService _appState;
     private readonly BookingSchedulerService _scheduler;
+    private readonly ConfigStore _configStore;
 
     public IReadOnlyList<LogEntry> Logs { get; set; } = Array.Empty<LogEntry>();
     public string StatusText { get; set; } = "IDLE";
@@ -20,17 +21,33 @@ public class IndexModel : PageModel
     public bool IsCountdownDisabled { get; set; }
     public bool WhatsAppConnected { get; set; }
 
-    public IndexModel(LogStore logStore, AppStateService appState, BookingSchedulerService scheduler)
+    // Config summary
+    public string GameType { get; set; } = "";
+    public string PreferredPeriod { get; set; } = "";
+    public string BookingDay { get; set; } = "";
+    public string TimeSlots { get; set; } = "";
+    public string Courts { get; set; } = "";
+
+    public IndexModel(LogStore logStore, AppStateService appState, BookingSchedulerService scheduler, ConfigStore configStore)
     {
         _logStore = logStore;
         _appState = appState;
         _scheduler = scheduler;
+        _configStore = configStore;
     }
 
     public void OnGet()
     {
         Logs = _logStore.GetAll();
         var state = _appState.State;
+
+        // Config summary
+        var cfg = _configStore.Get();
+        GameType = cfg.GameType;
+        PreferredPeriod = cfg.PreferredPeriod;
+        BookingDay = cfg.BookingDay;
+        TimeSlots = cfg.PreferredTimeSlots.Count > 0 ? string.Join(", ", cfg.PreferredTimeSlots) : "---";
+        Courts = cfg.PreferredCourts.Count > 0 ? string.Join(", ", cfg.PreferredCourts) : "---";
 
         StatusText = state.Status.ToString().ToUpper();
         StatusCss = state.Status.ToString().ToLower();

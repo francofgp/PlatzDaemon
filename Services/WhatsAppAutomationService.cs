@@ -173,6 +173,10 @@ public class WhatsAppAutomationService : IAsyncDisposable
     /// </summary>
     public async Task<bool> ExecuteBookingAsync(bool competitivePreArm = false)
     {
+        const int maxBrowserRetries = 1;
+
+        for (int browserAttempt = 0; browserAttempt <= maxBrowserRetries; browserAttempt++)
+        {
         var config = _configStore.Get();
 
         await _lock.WaitAsync();
@@ -181,16 +185,38 @@ public class WhatsAppAutomationService : IAsyncDisposable
             await _appState.UpdateStatusAsync(DaemonStatus.Running);
             await _log.LogInfoAsync("=== INICIO DE RESERVA ===");
 
+            // Proactively check if existing browser is still alive (fixes single-attempt recovery)
+            if (_browserContext != null)
+            {
+                try
+                {
+                    var testPage = _browserContext.Pages.FirstOrDefault();
+                    if (testPage != null)
+                    {
+                        await testPage.EvaluateAsync("() => true");
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("No hay paginas disponibles en el contexto del navegador.");
+                    }
+                }
+                catch
+                {
+                    await _log.LogWarningAsync("El navegador anterior fue cerrado. Limpiando para re-crear...");
+                    await CleanupDeadBrowserAsync();
+                }
+            }
+
             // Ensure browser is ready
             if (_browserContext == null)
             {
-                await _log.LogInfoAsync("Iniciando navegador en modo headless...");
+                await _log.LogInfoAsync("Iniciando navegador...");
                 _playwright = await Playwright.CreateAsync();
                 _browserContext = await _playwright.Chromium.LaunchPersistentContextAsync(
                     _browserDataPath,
                     new BrowserTypeLaunchPersistentContextOptions
                     {
-                        Headless = true,
+                        Headless = false, // WhatsApp Web detecta headless y no carga la sesion
                         Channel = "chromium",
                         Args = new[] { "--disable-blink-features=AutomationControlled" },
                         ViewportSize = new ViewportSize { Width = 1280, Height = 900 }
@@ -384,7 +410,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
                 // STEP 4: Click period button - ONLY in recent messages
                 var periodText = config.PreferredPeriod switch
                 {
-                    "Mañana" => "Turno mañana",
+                    "Mañana" => "Turnos mañana",
                     "Tarde" => "Turnos tarde",
                     "Noche" => "Turnos noche",
                     _ => "Turnos noche"
@@ -398,9 +424,9 @@ public class WhatsAppAutomationService : IAsyncDisposable
                     // Try alternative text patterns
                     var altTexts = config.PreferredPeriod switch
                     {
-                        "Mañana" => new[] { "mañana", "Mañana", "MAÑANA", "Turno Mañana" },
-                        "Tarde" => new[] { "tarde", "Tarde", "TARDE", "Turnos Tarde" },
-                        "Noche" => new[] { "noche", "Noche", "NOCHE", "Turnos Noche" },
+                        "Mañana" => new[] { "mañana", "Mañana", "MAÑANA", "Turno mañana", "Turno Mañana", "Turnos Mañana" },
+                        "Tarde" => new[] { "tarde", "Tarde", "TARDE", "Turno tarde", "Turno Tarde", "Turnos Tarde" },
+                        "Noche" => new[] { "noche", "Noche", "NOCHE", "Turno noche", "Turno Noche", "Turnos Noche" },
                         _ => new[] { "noche", "Noche" }
                     };
 
@@ -424,9 +450,21 @@ public class WhatsAppAutomationService : IAsyncDisposable
 
                         if (!await ClickButtonInRecentMessagesAsync(page, periodText, 15000, 3))
                         {
-                            await _log.LogErrorAsync($"No se encontro el boton del periodo '{periodText}'");
-                            await LogVisibleOptionsAsync(page, "periodo");
-                            await _appState.UpdateStatusAsync(DaemonStatus.Error, "Periodo no encontrado");
+                            // Detect which periods ARE available and show a clear message
+                            var available = await DetectAvailablePeriodsAsync(page);
+                            if (available.Count > 0)
+                            {
+                                var availableList = string.Join(", ", available);
+                                await _log.LogWarningAsync($"El periodo '{config.PreferredPeriod}' no esta disponible. No hay canchas para ese turno.");
+                                await _log.LogInfoAsync($"Periodos disponibles: {availableList}");
+                                await _appState.UpdateStatusAsync(DaemonStatus.Error, $"Periodo '{config.PreferredPeriod}' no disponible. Disponibles: {availableList}");
+                            }
+                            else
+                            {
+                                await _log.LogErrorAsync($"No se encontro el boton del periodo '{periodText}' ni otros periodos.");
+                                await LogVisibleOptionsAsync(page, "periodo");
+                                await _appState.UpdateStatusAsync(DaemonStatus.Error, "Periodo no encontrado");
+                            }
                             return false;
                         }
                     }
@@ -562,11 +600,18 @@ public class WhatsAppAutomationService : IAsyncDisposable
         }
         catch (Exception ex) when (IsBrowserClosedException(ex))
         {
-            await _log.LogWarningAsync("El navegador se cerro inesperadamente. Limpiando sesion...");
+            await _log.LogWarningAsync("El navegador se cerro durante la ejecucion. Limpiando sesion...");
             await CleanupDeadBrowserAsync();
-            await _log.LogInfoAsync("Sesion limpiada. Se re-creara automaticamente en la proxima ejecucion.");
-            await _appState.UpdateStatusAsync(DaemonStatus.Error, "Navegador cerrado - se reintentara automaticamente");
-            _notification.NotifyError("Platz Daemon", "El navegador se cerro. Se reintentara en la proxima ejecucion.");
+
+            if (browserAttempt < maxBrowserRetries)
+            {
+                await _log.LogInfoAsync("Reintentando reserva con un nuevo navegador...");
+                continue; // finally releases the lock, then loop re-acquires it
+            }
+
+            await _log.LogErrorAsync("No se pudo completar la reserva tras reintentar con nuevo navegador.");
+            await _appState.UpdateStatusAsync(DaemonStatus.Error, "Navegador cerrado - multiples intentos fallidos");
+            _notification.NotifyError("Platz Daemon", "El navegador se cerro durante la reserva. No se pudo reintentar.");
             return false;
         }
         catch (Exception ex)
@@ -580,6 +625,9 @@ public class WhatsAppAutomationService : IAsyncDisposable
         {
             _lock.Release();
         }
+        } // end browser retry loop
+
+        return false;
     }
 
     /// <summary>
@@ -1519,6 +1567,56 @@ public class WhatsAppAutomationService : IAsyncDisposable
         {
             await _log.LogWarningAsync($"Error al logear opciones visibles: {ex.Message}");
         }
+    }
+
+    // ========================================================================
+    // Detect available periods
+    // ========================================================================
+
+    /// <summary>
+    /// Scans recent messages for known period buttons (Turnos mañana/tarde/noche)
+    /// and returns a list of which ones are actually visible/available.
+    /// </summary>
+    private async Task<List<string>> DetectAvailablePeriodsAsync(IPage page)
+    {
+        var available = new List<string>();
+        try
+        {
+            var detected = await page.EvaluateAsync<string[]>(@"() => {
+                const main = document.querySelector('#main');
+                if (!main) return [];
+
+                const found = [];
+                const keywords = ['mañana', 'tarde', 'noche'];
+                const messages = [...main.querySelectorAll('[class*=""message-in""]')].slice(-10);
+
+                for (const msg of messages) {
+                    const allText = msg.textContent.toLowerCase();
+                    for (const kw of keywords) {
+                        if (allText.includes('turnos ' + kw) || allText.includes('turno ' + kw)) {
+                            if (!found.includes(kw)) found.push(kw);
+                        }
+                    }
+                }
+
+                return found;
+            }");
+
+            if (detected != null)
+            {
+                foreach (var period in detected)
+                {
+                    // Capitalize for display: "mañana" -> "Mañana"
+                    var display = char.ToUpper(period[0]) + period[1..];
+                    available.Add(display);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await _log.LogWarningAsync($"Error detectando periodos disponibles: {ex.Message}");
+        }
+        return available;
     }
 
     // ========================================================================

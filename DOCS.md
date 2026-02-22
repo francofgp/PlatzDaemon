@@ -360,7 +360,7 @@ Para enviar en el momento exacto, el sistema usa una espera de tres fases:
 | **Cancha rechazada al confirmar** | Reintenta automáticamente hasta 3 veces el flujo completo. |
 | **Conversación pendiente con el bot** | Envía "Salir" para resetear antes de cada intento. |
 | **Confirmación de nombre (DNI)** | Clickea "Sí" automáticamente cuando el bot pregunta. |
-| **Navegador cerrado inesperadamente** | Detecta el error, limpia la sesión y recrea el navegador en la próxima ejecución. |
+| **Navegador cerrado inesperadamente** | Detecta que el navegador fue cerrado, lo limpia y recrea automáticamente. Si fue cerrado entre ejecuciones, se recupera en el mismo intento. Si fue cerrado durante una ejecución, se recupera en el siguiente intento. |
 | **Horario no disponible** | Prueba el siguiente horario de la lista de prioridad. |
 | **Cancha preferida no disponible** | Prueba la siguiente cancha, o toma la primera disponible. |
 
@@ -397,6 +397,10 @@ Esto previene problemas si una ejecución anterior quedó a mitad de camino.
 ### Sesiones posteriores
 
 La sesión se guarda en `Data/browser-data/`. Mientras estos datos estén intactos, no necesitás volver a escanear el QR. WhatsApp Web mantiene la sesión activa por varias semanas.
+
+### Navegador visible (headful)
+
+Chromium siempre se abre en modo visible (con ventana). Esto es obligatorio porque WhatsApp Web detecta y bloquea navegadores invisibles (headless). Si cerrás la ventana de Chromium, la sesión de WhatsApp **no se pierde** (está guardada en disco). Al ejecutar la reserva de nuevo, se abre un nuevo Chromium automáticamente.
 
 ### Verificación de sesión
 
@@ -543,11 +547,15 @@ No debería haber riesgo. La aplicación envía como máximo unos pocos mensajes
 
 ### ¿El navegador Chromium siempre se abre?
 
-**Sí.** Para funcionar, Playwright necesita un navegador Chromium abierto. Esto es necesario porque WhatsApp Web requiere un navegador real para mantener la sesión activa. El navegador se abre en modo **visible** (headful) para poder escanear el QR si es necesario.
+**Sí.** Chromium siempre se abre en modo **visible** (con ventana). Esto es obligatorio porque WhatsApp Web detecta y bloquea navegadores invisibles (headless) mediante técnicas de fingerprinting. Si se intentara en modo invisible, WhatsApp no cargaría la sesión y pediría escanear el QR nuevamente.
 
-### ¿Qué pasa si cierro el navegador Chromium accidentalmente?
+### ¿Qué pasa si cierro el navegador Chromium?
 
-La aplicación detecta el cierre inesperado del navegador, limpia la sesión interna y se recupera automáticamente. En la próxima ejecución programada, se re-creará un nuevo navegador y se restaurará la sesión de WhatsApp (usando los datos guardados en `Data/browser-data/`). No se pierde la sesión de WhatsApp.
+**No pasa nada.** La aplicación detecta automáticamente que el navegador fue cerrado y se recupera:
+
+- **Si lo cerrás entre ejecuciones**: al momento de la siguiente ejecución (manual o programada), la app detecta que el navegador ya no responde, lo limpia y abre uno nuevo automáticamente. Todo en un solo intento, sin errores.
+- **Si lo cerrás durante una ejecución**: la reserva en curso se interrumpe, pero la sesión se limpia. Si ejecutás de nuevo, se abre un nuevo Chromium y funciona normalmente.
+- **No perdés la sesión de WhatsApp**: los datos de sesión se guardan en `Data/browser-data/`, no en la ventana del navegador. Cerrar Chromium no borra la sesión.
 
 ### ¿Puedo reservar para mañana?
 
@@ -576,7 +584,7 @@ Sí. En el Dashboard, hacé click en **"Ejecutar ahora"**. Esto dispara la reser
 
 ### Error "Target closed" o "Browser has been closed"
 
-El navegador Chromium se cerró inesperadamente. La aplicación se recupera sola: en la próxima ejecución se re-creará el navegador. Si ocurre frecuentemente, evitá cerrar la ventana de Chromium mientras la automatización está activa.
+El navegador Chromium se cerró inesperadamente. La aplicación se recupera sola: detecta que el navegador no responde, lo limpia y crea uno nuevo automáticamente. Si lo cerrás entre ejecuciones, la próxima ejecución funciona sin problemas. Si lo cerrás durante una ejecución en curso, ejecutá de nuevo y se recupera.
 
 ### No encuentra el botón "Hoy" o "Mañana"
 
