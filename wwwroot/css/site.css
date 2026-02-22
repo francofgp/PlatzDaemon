@@ -215,8 +215,7 @@ body.terminal::before {
 .log-console::-webkit-scrollbar-thumb { background: #33ff3350; }
 .log-console::-webkit-scrollbar-thumb:hover { background: #33ff3380; }
 
-/* TODO: 6. CRT flicker - animacion sutil de parpadeo tipo monitor viejo.
-   Descomentar para probar, puede ser molesto en uso prolongado.
+/* 6. CRT flicker - sutil, casi imperceptible */
 body.terminal {
     animation: crt-flicker 4s infinite;
 }
@@ -226,7 +225,6 @@ body.terminal {
     75%      { opacity: 0.97; }
 }
 
-
 @media (max-width: 768px) {
     .status-row { flex-direction: column; }
     .countdown { font-size: 1.5em; }
@@ -234,4 +232,3 @@ body.terminal {
     .ascii-art { font-size: 7px; }
     .dashboard-actions { flex-direction: column; }
 }
-*/

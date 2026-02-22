@@ -28,21 +28,26 @@ jobs:
       - name: 🗜️ Empaquetar en ZIP
         run: Compress-Archive -Path ./publish/* -DestinationPath ./PlatzDaemon-${{ github.ref_name }}-win-x64.zip
 
+      - name: 📝 Extraer notas del CHANGELOG
+        id: changelog
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $content = Get-Content CHANGELOG.md -Raw
+          # Extraer la sección de la versión actual (entre ## [version] y el siguiente ## [)
+          if ($content -match "(?s)## \[$version\][^\r\n]*\r?\n(.*?)(?=\r?\n## \[|$)") {
+            $notes = $Matches[1].Trim()
+          } else {
+            $notes = "Release ${{ github.ref_name }}"
+          }
+          # Guardar en archivo para evitar problemas con caracteres especiales
+          $notes | Out-File -FilePath release-notes.md -Encoding utf8
+
       - name: 🚀 Crear Release en GitHub
         uses: softprops/action-gh-release@v2
         with:
-          name: "PlatzDaemon ${{ github.ref_name }}"
-          body: |
-            ## 🎾 PlatzDaemon ${{ github.ref_name }}
-
-            ### Descarga e instalación
-            1. Descargá el archivo `.zip` de abajo
-            2. Extraelo en una carpeta
-            3. Ejecutá `PlatzDaemon.exe`
-            4. Se abre en `http://localhost:5000`
-
-            > ⚠️ La primera vez Windows SmartScreen puede mostrar una advertencia.
-            > Hacé click en "Más información" → "Ejecutar de todas formas".
+          name: "🎾 PlatzDaemon ${{ github.ref_name }}"
+          body_path: release-notes.md
           files: ./PlatzDaemon-${{ github.ref_name }}-win-x64.zip
           draft: false
           prerelease: false
