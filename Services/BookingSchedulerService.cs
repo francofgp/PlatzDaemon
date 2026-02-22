@@ -4,7 +4,7 @@ namespace PlatzDaemon.Services;
 
 public class BookingSchedulerService : BackgroundService
 {
-    private readonly ConfigStore _configStore;
+    private readonly IConfigStore _configStore;
     private readonly WhatsAppAutomationService _whatsApp;
     private readonly LogStore _log;
     private readonly AppStateService _appState;
@@ -15,7 +15,7 @@ public class BookingSchedulerService : BackgroundService
         TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time");
 
     public BookingSchedulerService(
-        ConfigStore configStore,
+        IConfigStore configStore,
         WhatsAppAutomationService whatsApp,
         LogStore log,
         AppStateService appState,
@@ -62,13 +62,7 @@ public class BookingSchedulerService : BackgroundService
                 }
 
                 var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ArgentinaTimeZone);
-                var todayTrigger = now.Date + triggerTimeOfDay;
-
-                // If trigger time already passed today, schedule for tomorrow
-                if (now > todayTrigger.AddMinutes(5))
-                {
-                    todayTrigger = todayTrigger.AddDays(1);
-                }
+                var todayTrigger = CalculateNextTrigger(now, triggerTimeOfDay);
 
                 _appState.SetNextRun(todayTrigger);
                 await _appState.UpdateStatusAsync(DaemonStatus.Waiting,
@@ -163,7 +157,17 @@ public class BookingSchedulerService : BackgroundService
         }
     }
 
-    private static string FormatTimeSpan(TimeSpan ts)
+    internal static DateTime CalculateNextTrigger(DateTime now, TimeSpan triggerTimeOfDay)
+    {
+        var todayTrigger = now.Date + triggerTimeOfDay;
+
+        if (now > todayTrigger.AddMinutes(5))
+            todayTrigger = todayTrigger.AddDays(1);
+
+        return todayTrigger;
+    }
+
+    internal static string FormatTimeSpan(TimeSpan ts)
     {
         if (ts.TotalHours >= 1)
             return $"{(int)ts.TotalHours}h {ts.Minutes}m";

@@ -13,6 +13,7 @@ builder.Services.AddSignalR();
 
 // Register app services as singletons (shared state across the app)
 builder.Services.AddSingleton<ConfigStore>();
+builder.Services.AddSingleton<IConfigStore>(sp => sp.GetRequiredService<ConfigStore>());
 builder.Services.AddSingleton<LogStore>();
 builder.Services.AddSingleton<AppStateService>();
 builder.Services.AddSingleton<NotificationService>();

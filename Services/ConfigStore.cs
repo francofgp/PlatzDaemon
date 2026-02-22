@@ -3,7 +3,7 @@ using PlatzDaemon.Models;
 
 namespace PlatzDaemon.Services;
 
-public class ConfigStore
+public class ConfigStore : IConfigStore
 {
     private readonly string _configPath;
     private readonly SemaphoreSlim _lock = new(1, 1);
@@ -65,7 +65,7 @@ public class ConfigStore
     /// Migra configuraciones viejas al formato actual.
     /// Ej: horarios "18:00" -> "18:00hs"
     /// </summary>
-    private static void MigrateConfig(BookingConfig config)
+    internal static void MigrateConfig(BookingConfig config)
     {
         if (config.PreferredTimeSlots is { Count: > 0 })
         {

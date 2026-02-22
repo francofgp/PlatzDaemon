@@ -1,14 +1,16 @@
 using PlatzDaemon.Models;
 using Microsoft.Playwright;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PlatzDaemon.Services;
 
+[ExcludeFromCodeCoverage]
 public class WhatsAppAutomationService : IAsyncDisposable
 {
     private readonly IWebHostEnvironment _env;
     private readonly LogStore _log;
-    private readonly ConfigStore _configStore;
+    private readonly IConfigStore _configStore;
     private readonly NotificationService _notification;
     private readonly AppStateService _appState;
 
@@ -22,7 +24,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
     public WhatsAppAutomationService(
         IWebHostEnvironment env,
         LogStore log,
-        ConfigStore configStore,
+        IConfigStore configStore,
         NotificationService notification,
         AppStateService appState)
     {
@@ -1626,7 +1628,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
     /// <summary>
     /// Detects if an exception was caused by the browser being closed externally.
     /// </summary>
-    private static bool IsBrowserClosedException(Exception ex)
+    internal static bool IsBrowserClosedException(Exception ex)
     {
         var msg = ex.Message.ToLowerInvariant();
         return msg.Contains("target closed") ||

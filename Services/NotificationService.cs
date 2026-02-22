@@ -1,22 +1,26 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Media;
 
 namespace PlatzDaemon.Services;
 
 public class NotificationService
 {
+    [ExcludeFromCodeCoverage]
     public void NotifySuccess(string title, string message)
     {
         ShowWindowsNotification(title, message);
         PlaySound();
     }
 
+    [ExcludeFromCodeCoverage]
     public void NotifyError(string title, string message)
     {
         ShowWindowsNotification(title, message);
         PlaySound();
     }
 
+    [ExcludeFromCodeCoverage]
     private void ShowWindowsNotification(string title, string message)
     {
         try
@@ -56,6 +60,7 @@ public class NotificationService
         }
     }
 
+    [ExcludeFromCodeCoverage]
     private void PlaySound()
     {
         try
@@ -68,7 +73,7 @@ public class NotificationService
         }
     }
 
-    private static string EscapeXml(string text)
+    internal static string EscapeXml(string text)
     {
         return text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
     }

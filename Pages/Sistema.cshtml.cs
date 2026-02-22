@@ -7,7 +7,7 @@ namespace PlatzDaemon.Pages;
 
 public class SistemaModel : PageModel
 {
-    private readonly ConfigStore _configStore;
+    private readonly IConfigStore _configStore;
 
     [BindProperty]
     public bool Enabled { get; set; }
@@ -27,7 +27,7 @@ public class SistemaModel : PageModel
     [TempData]
     public bool SavedOk { get; set; }
 
-    public SistemaModel(ConfigStore configStore)
+    public SistemaModel(IConfigStore configStore)
     {
         _configStore = configStore;
     }

@@ -7,7 +7,7 @@ namespace PlatzDaemon.Pages;
 
 public class ConfigModel : PageModel
 {
-    private readonly ConfigStore _configStore;
+    private readonly IConfigStore _configStore;
 
     [BindProperty]
     public string PreferredPeriod { get; set; } = "Noche";
@@ -27,7 +27,7 @@ public class ConfigModel : PageModel
     [TempData]
     public bool SavedOk { get; set; }
 
-    public ConfigModel(ConfigStore configStore)
+    public ConfigModel(IConfigStore configStore)
     {
         _configStore = configStore;
     }

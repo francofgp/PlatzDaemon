@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="PlatzDaemon.csproj" />
+  <Project Path="PlatzDaemon.Tests/PlatzDaemon.Tests.csproj" />
+</Solution>

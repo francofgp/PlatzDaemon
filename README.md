@@ -12,6 +12,8 @@
   <img src="https://img.shields.io/badge/ASP.NET%20Core-10.0-purple" alt="ASP.NET Core">
   <img src="https://img.shields.io/badge/Playwright-1.51-green" alt="Playwright">
   <img src="https://img.shields.io/badge/Platform-Windows%20x64-blue" alt="Platform">
+  <img src="https://img.shields.io/badge/coverage-67.8%25-brightgreen" alt="Coverage">
+  <img src="https://img.shields.io/badge/tests-98%20passed-brightgreen" alt="Tests">
 </p>
 
 Platz Daemon es una aplicación de escritorio que automatiza el proceso de reserva de canchas de tenis a través del bot de WhatsApp de tu club. Se ejecuta como un servidor local con interfaz web retro estilo terminal de los '90.
@@ -140,6 +142,26 @@ dotnet run
 
 La aplicación se abre en `http://localhost:5000`.
 
+### Tests
+
+El proyecto usa **xUnit** con **NSubstitute** para mocking. Los tests cubren modelos, servicios y páginas.
+
+```bash
+# Correr todos los tests
+dotnet test
+
+# Correr tests con reporte de cobertura
+dotnet test --collect:"XPlat Code Coverage" --settings coverage.runsettings --results-directory ./coverage
+
+# Generar reporte HTML (requiere reportgenerator)
+dotnet tool install -g dotnet-reportgenerator-globaltool
+reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:"coverage/report" -reporttypes:Html
+```
+
+El reporte HTML se genera en `coverage/report/index.html`.
+
+> 💡 Los tests se ejecutan automáticamente en GitHub Actions en cada push a `main` y en cada pull request. También se ejecutan antes de crear un Release.
+
 ### Publicar como EXE
 
 Para generar un ejecutable distribuible (self-contained, no requiere .NET instalado):
@@ -160,10 +182,11 @@ git push origin v1.0.0
 ```
 
 Esto dispara el workflow `.github/workflows/release.yml` que:
-1. Compila el proyecto en `windows-latest`.
-2. Genera el EXE self-contained.
-3. Lo empaqueta en `PlatzDaemon-v1.0.0-win-x64.zip`.
-4. Crea el Release en GitHub con el ZIP listo para descargar.
+1. Ejecuta todos los tests (si fallan, el release se cancela).
+2. Compila el proyecto en `windows-latest`.
+3. Genera el EXE self-contained.
+4. Lo empaqueta en `PlatzDaemon-v1.0.0-win-x64.zip`.
+5. Crea el Release en GitHub con el ZIP listo para descargar.
 
 Para la próxima versión: `git tag v1.1.0 && git push origin v1.1.0`, y así.
 
@@ -176,7 +199,8 @@ Para la próxima versión: `git tag v1.1.0 && git push origin v1.1.0`, y así.
 ```
 court-daemon/
 ├── .github/workflows/        # GitHub Actions
-│   └── release.yml           # Build & publish automático
+│   ├── ci.yml                # CI: build + tests + coverage
+│   └── release.yml           # Build, test & publish automático
 ├── Pages/                    # Páginas Razor (UI)
 │   ├── Index.cshtml          # Dashboard con logs en tiempo real
 │   ├── Config.cshtml         # Configuración "Mi Reserva"
@@ -186,7 +210,9 @@ court-daemon/
 │   ├── WhatsAppAutomationService.cs  # Automatización con Playwright
 │   ├── BookingSchedulerService.cs    # Scheduler (BackgroundService)
 │   ├── ConfigStore.cs                # Persistencia de configuración
+│   ├── IConfigStore.cs               # Interfaz para testing
 │   ├── LogStore.cs                   # Almacén de logs + SignalR
+│   ├── NotificationService.cs       # Notificaciones Windows
 │   └── AppStateService.cs           # Estado de la aplicación
 ├── Models/                   # Modelos de datos
 │   ├── BookingConfig.cs      # Modelo de configuración
@@ -194,6 +220,10 @@ court-daemon/
 │   └── LogEntry.cs           # Entrada de log
 ├── Hubs/
 │   └── LogHub.cs             # Hub de SignalR para logs en tiempo real
+├── PlatzDaemon.Tests/        # Tests (xUnit + NSubstitute)
+│   ├── Models/               # Tests de modelos
+│   ├── Services/             # Tests de servicios
+│   └── Pages/                # Tests de páginas
 ├── Data/                     # (gitignored)
 │   ├── config.json           # Configuración persistida
 │   └── browser-data/         # Datos de sesión del navegador
@@ -203,7 +233,9 @@ court-daemon/
 │   │   └── site.css          # Estilos personalizados
 │   └── js/
 │       └── site.js           # JavaScript del cliente
+├── PlatzDaemon.slnx          # Solution (incluye app + tests)
 ├── PlatzDaemon.csproj        # Proyecto .NET
+├── coverage.runsettings      # Config de cobertura
 ├── Program.cs                # Entry point
 ├── README.md
 └── DOCS.md
@@ -220,6 +252,7 @@ court-daemon/
 | **SignalR** | Logs y estado en tiempo real |
 | **terminal.css** | UI retro estilo terminal |
 | **BackgroundService** | Scheduler para ejecución programada |
+| **xUnit + NSubstitute** | Testing y mocking |
 
 ---
 

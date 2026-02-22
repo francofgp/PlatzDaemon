@@ -7,10 +7,24 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
-### Fixed
-- **Countdown post-ejecución**: el reloj del próximo disparo quedaba en `00:00:00` después de ejecutarse. Ahora calcula inmediatamente el disparo de mañana y actualiza el dashboard vía SignalR.
+## [1.3.0] - 2026-02-22
+
+### Added
+- **Suite de tests**: 98 tests unitarios con xUnit + NSubstitute cubriendo modelos, servicios y páginas (67.8% line coverage, 81% method coverage).
+- **CI pipeline**: GitHub Actions workflow (`ci.yml`) que ejecuta build + tests + reporte de cobertura en cada push a `main` y pull request.
+- **IConfigStore**: interfaz extraída de `ConfigStore` para permitir mocking en tests.
+- **CalculateNextTrigger**: lógica de cálculo del próximo disparo extraída como método testeable.
+- **Badges**: badges de cobertura y tests en el README.
+- **Coverage**: archivo `coverage.runsettings` para excluir código no-testeable (Playwright, Razor views, Program.cs) del reporte de cobertura.
 
 ### Changed
+- **Release pipeline**: ahora ejecuta todos los tests antes de publicar el EXE. Si fallan, el release se cancela.
+- **Release pipeline**: `dotnet publish` apunta explícitamente a `PlatzDaemon.csproj` para evitar publicar el proyecto de tests.
+- **Visibilidad de helpers**: `FormatTimeSpan`, `EscapeXml`, `MigrateConfig` e `IsBrowserClosedException` cambiados a `internal` para testing vía `InternalsVisibleTo`.
+- **Documentación**: sección de tests agregada al README, estructura del proyecto actualizada.
+
+### Fixed
+- **Countdown post-ejecución**: el reloj del próximo disparo quedaba en `00:00:00` después de ejecutarse. Ahora calcula inmediatamente el disparo de mañana y actualiza el dashboard vía SignalR.
 - **Documentación**: agregadas instrucciones concretas para desactivar la suspensión automática de Windows (Configuración > Energía y suspensión > "Nunca") en README y DOCS.
 
 ## [1.2.0] - 2026-02-22
@@ -58,7 +72,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Validación de horarios**: formato `HH:MMhs` con auto-formateo y detección de duplicados.
 - **CI/CD**: GitHub Actions workflow para publicar releases automáticamente con tags.
 
-[Unreleased]: https://github.com/francofgp/PlatzDaemon/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/francofgp/PlatzDaemon/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/francofgp/PlatzDaemon/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/francofgp/PlatzDaemon/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/francofgp/PlatzDaemon/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/francofgp/PlatzDaemon/releases/tag/v1.0.0

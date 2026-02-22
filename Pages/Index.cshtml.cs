@@ -10,7 +10,7 @@ public class IndexModel : PageModel
     private readonly LogStore _logStore;
     private readonly AppStateService _appState;
     private readonly BookingSchedulerService _scheduler;
-    private readonly ConfigStore _configStore;
+    private readonly IConfigStore _configStore;
 
     public IReadOnlyList<LogEntry> Logs { get; set; } = Array.Empty<LogEntry>();
     public string StatusText { get; set; } = "IDLE";
@@ -28,7 +28,7 @@ public class IndexModel : PageModel
     public string TimeSlots { get; set; } = "";
     public string Courts { get; set; } = "";
 
-    public IndexModel(LogStore logStore, AppStateService appState, BookingSchedulerService scheduler, ConfigStore configStore)
+    public IndexModel(LogStore logStore, AppStateService appState, BookingSchedulerService scheduler, IConfigStore configStore)
     {
         _logStore = logStore;
         _appState = appState;

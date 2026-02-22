@@ -67,5 +67,8 @@ Desktop.ini
 terminal.css.documentacion.md
 terminalcss.html
 
+# ── Test coverage ──
+coverage/
+
 # ── Release zips ──
 *.zip

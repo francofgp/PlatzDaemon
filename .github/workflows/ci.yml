@@ -1,0 +1,63 @@
+name: CI - Build & Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests with coverage
+        run: dotnet test --no-build --configuration Release --settings coverage.runsettings --collect:"XPlat Code Coverage" --results-directory ./coverage --logger "trx;LogFileName=results.trx"
+
+      - name: Coverage summary
+        if: always()
+        shell: pwsh
+        run: |
+          $xml = Get-ChildItem -Path ./coverage -Recurse -Filter "coverage.cobertura.xml" | Select-Object -First 1
+          if ($xml) {
+            [xml]$doc = Get-Content $xml.FullName
+            $lineRate = [math]::Round([double]$doc.coverage.'line-rate' * 100, 1)
+            $branchRate = [math]::Round([double]$doc.coverage.'branch-rate' * 100, 1)
+            $lines = $doc.coverage.'lines-covered' + " / " + $doc.coverage.'lines-valid'
+            Write-Host "Line coverage: $lineRate% ($lines lines)"
+            Write-Host "Branch coverage: $branchRate%"
+            "## Test Coverage" >> $env:GITHUB_STEP_SUMMARY
+            "| Metric | Value |" >> $env:GITHUB_STEP_SUMMARY
+            "|--------|-------|" >> $env:GITHUB_STEP_SUMMARY
+            "| Line coverage | **$lineRate%** |" >> $env:GITHUB_STEP_SUMMARY
+            "| Branch coverage | **$branchRate%** |" >> $env:GITHUB_STEP_SUMMARY
+            "| Lines covered | $lines |" >> $env:GITHUB_STEP_SUMMARY
+          }
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./coverage/**/coverage.cobertura.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./coverage/**/*.trx
