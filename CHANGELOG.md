@@ -7,6 +7,10 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Added
+- **Busqueda dinámica de periodos**: el sistema ahora busca los horarios preferidos en TODOS los periodos disponibles (Mañana, Tarde, Noche), no solo en el periodo configurado. Empieza por el periodo preferido y, si no encuentra horarios, cierra el popup con Escape y prueba el siguiente periodo automáticamente.
+- **Config UI**: texto de ayuda bajo "Periodo preferido" indicando que el sistema busca automáticamente en otros periodos.
+
 ### Fixed
 - **README**: corregido nombre del proyecto `court-daemon` → `PlatzDaemon` en instrucciones de instalación y estructura del proyecto.
 - **README**: agregado comando alternativo con `powershell` para instalar Playwright.

@@ -409,87 +409,16 @@ public class WhatsAppAutomationService : IAsyncDisposable
                     return false;
                 }
 
-                // STEP 4: Click period button - ONLY in recent messages
-                var periodText = config.PreferredPeriod switch
-                {
-                    "Mañana" => "Turnos mañana",
-                    "Tarde" => "Turnos tarde",
-                    "Noche" => "Turnos noche",
-                    _ => "Turnos noche"
-                };
-                await _log.LogInfoAsync($"Seleccionando periodo: {periodText}...");
-                // Log what's visible BEFORE attempting to click (useful for debugging)
-                await LogVisibleOptionsAsync(page, "pre-periodo");
-                var countBeforePeriod = await GetMessageCountAsync(page);
-                if (!await ClickButtonInRecentMessagesAsync(page, periodText, 30000, 5))
-                {
-                    // Try alternative text patterns
-                    var altTexts = config.PreferredPeriod switch
-                    {
-                        "Mañana" => new[] { "mañana", "Mañana", "MAÑANA", "Turno mañana", "Turno Mañana", "Turnos Mañana" },
-                        "Tarde" => new[] { "tarde", "Tarde", "TARDE", "Turno tarde", "Turno Tarde", "Turnos Tarde" },
-                        "Noche" => new[] { "noche", "Noche", "NOCHE", "Turno noche", "Turno Noche", "Turnos Noche" },
-                        _ => new[] { "noche", "Noche" }
-                    };
-
-                    var found = false;
-                    foreach (var alt in altTexts)
-                    {
-                        if (await ClickButtonInRecentMessagesAsync(page, alt, 3000))
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (!found)
-                    {
-                        // Last resort: extra scroll + longer wait + retry
-                        await _log.LogWarningAsync("Periodo no encontrado en primer intento. Scrolleando y reintentando...");
-                        await ScrollToBottomAsync(page);
-                        await Task.Delay(5000);
-                        await ScrollToBottomAsync(page);
-
-                        if (!await ClickButtonInRecentMessagesAsync(page, periodText, 15000, 3))
-                        {
-                            // Detect which periods ARE available and show a clear message
-                            var available = await DetectAvailablePeriodsAsync(page);
-                            if (available.Count > 0)
-                            {
-                                var availableList = string.Join(", ", available);
-                                await _log.LogWarningAsync($"El periodo '{config.PreferredPeriod}' no esta disponible. No hay canchas para ese turno.");
-                                await _log.LogInfoAsync($"Periodos disponibles: {availableList}");
-                                await _appState.UpdateStatusAsync(DaemonStatus.Error, $"Periodo '{config.PreferredPeriod}' no disponible. Disponibles: {availableList}");
-                            }
-                            else
-                            {
-                                await _log.LogErrorAsync($"No se encontro el boton del periodo '{periodText}' ni otros periodos.");
-                                await LogVisibleOptionsAsync(page, "periodo");
-                                await _appState.UpdateStatusAsync(DaemonStatus.Error, "Periodo no encontrado");
-                            }
-                            return false;
-                        }
-                    }
-                }
-                await _log.LogSuccessAsync($"Periodo seleccionado: {config.PreferredPeriod}");
-
-                // Wait for bot to respond with time slots
-                await _log.LogInfoAsync("Esperando horarios disponibles...");
-                if (!await WaitForBotResponseAsync(page, countBeforePeriod, 20000))
-                {
-                    await _log.LogWarningAsync("No se detecto respuesta del bot despues del periodo, continuando...");
-                }
-
-                // STEP 5: Select time slot - ONLY in recent messages
-                var selectedTime = await SelectTimeSlotAsync(page, config.PreferredTimeSlots);
+                // STEP 4+5: Dynamic multi-period time slot search
+                // Tries PreferredPeriod first, then iterates all other available periods.
+                // For each period: opens popup, searches ALL preferred time slots, closes if not found.
+                var selectedTime = await SelectTimeSlotAcrossPeriodsAsync(page, config);
                 if (selectedTime == null)
                 {
-                    await _log.LogErrorAsync("NINGUNO de los horarios preferidos esta disponible.");
-                    await _appState.UpdateStatusAsync(DaemonStatus.Error, "Horarios no disponibles");
-                    _notification.NotifyError("Platz Daemon", "No hay horarios disponibles en tu lista de prioridad.");
+                    await _appState.UpdateStatusAsync(DaemonStatus.Error, "Horarios no disponibles en ningun periodo");
+                    _notification.NotifyError("Platz Daemon", "No hay horarios disponibles en ningún periodo.");
                     return false;
                 }
-                await _log.LogSuccessAsync($"Horario seleccionado: {selectedTime}");
 
                 // Wait for bot to respond with court options
                 var countBeforeCourt = await GetMessageCountAsync(page);
@@ -1569,6 +1498,162 @@ public class WhatsAppAutomationService : IAsyncDisposable
         {
             await _log.LogWarningAsync($"Error al logear opciones visibles: {ex.Message}");
         }
+    }
+
+    // ========================================================================
+    // Close time-slot popup (Escape key)
+    // ========================================================================
+
+    /// <summary>
+    /// Closes the time-slot list popup by pressing Escape.
+    /// WhatsApp Web closes the popup and returns to the period selection view.
+    /// </summary>
+    private async Task CloseTimeSlotPopupAsync(IPage page)
+    {
+        try
+        {
+            await page.Keyboard.PressAsync("Escape");
+            await Task.Delay(1500); // Wait for popup close animation
+            await _log.LogInfoAsync("Popup de horarios cerrado (Escape).");
+        }
+        catch (Exception ex)
+        {
+            await _log.LogWarningAsync($"Error cerrando popup de horarios: {ex.Message}");
+        }
+    }
+
+    // ========================================================================
+    // Dynamic multi-period time slot search
+    // ========================================================================
+
+    /// <summary>
+    /// Tries to find and select a preferred time slot across ALL available periods.
+    /// Starts with PreferredPeriod, then iterates remaining periods.
+    /// For each period: opens the popup, searches all preferred slots, closes if not found.
+    /// Returns the selected time slot string, or null if none found in any period.
+    /// </summary>
+    private async Task<string?> SelectTimeSlotAcrossPeriodsAsync(IPage page, BookingConfig config)
+    {
+        // Build period order: preferred first, then the rest
+        var allPeriods = new[] { "Mañana", "Tarde", "Noche" };
+        var periodOrder = new List<string>();
+        if (allPeriods.Contains(config.PreferredPeriod))
+            periodOrder.Add(config.PreferredPeriod);
+        foreach (var p in allPeriods)
+        {
+            if (!periodOrder.Contains(p))
+                periodOrder.Add(p);
+        }
+
+        // Detect which period buttons are actually present in the chat
+        await LogVisibleOptionsAsync(page, "pre-periodo");
+        var availablePeriods = await DetectAvailablePeriodsAsync(page);
+        if (availablePeriods.Count > 0)
+        {
+            await _log.LogInfoAsync($"Periodos disponibles detectados: {string.Join(", ", availablePeriods)}");
+            // Filter order to only available periods
+            periodOrder = periodOrder.Where(p => availablePeriods.Contains(p)).ToList();
+        }
+        else
+        {
+            await _log.LogWarningAsync("No se pudieron detectar periodos. Intentando todos en orden...");
+        }
+
+        if (periodOrder.Count == 0)
+        {
+            await _log.LogErrorAsync("No hay periodos disponibles para buscar horarios.");
+            return null;
+        }
+
+        await _log.LogInfoAsync($"Orden de busqueda de periodos: {string.Join(" → ", periodOrder)}");
+        await _log.LogInfoAsync($"Horarios a buscar: {string.Join(", ", config.PreferredTimeSlots)}");
+
+        for (int pi = 0; pi < periodOrder.Count; pi++)
+        {
+            var period = periodOrder[pi];
+            var periodText = period switch
+            {
+                "Mañana" => "Turnos mañana",
+                "Tarde" => "Turnos tarde",
+                "Noche" => "Turnos noche",
+                _ => $"Turnos {period.ToLower()}"
+            };
+
+            await _log.LogInfoAsync($"=== Probando periodo {pi + 1}/{periodOrder.Count}: {periodText} ===");
+
+            // Try to click this period's button
+            var countBeforePeriod = await GetMessageCountAsync(page);
+            var clicked = await ClickPeriodButtonAsync(page, period, periodText);
+            if (!clicked)
+            {
+                await _log.LogWarningAsync($"No se pudo abrir '{periodText}'. Saltando al siguiente periodo...");
+                continue;
+            }
+            await _log.LogSuccessAsync($"Periodo abierto: {periodText}");
+
+            // Wait for bot to respond with time slots popup
+            await _log.LogInfoAsync("Esperando horarios disponibles...");
+            if (!await WaitForBotResponseAsync(page, countBeforePeriod, 20000))
+            {
+                await _log.LogWarningAsync("No se detecto respuesta del bot despues del periodo, continuando...");
+            }
+
+            // Search ALL preferred slots in this popup
+            var selectedTime = await SelectTimeSlotAsync(page, config.PreferredTimeSlots);
+            if (selectedTime != null)
+            {
+                await _log.LogSuccessAsync($"Horario encontrado en '{periodText}': {selectedTime}");
+                return selectedTime;
+            }
+
+            // None of the preferred slots found in this period
+            await _log.LogWarningAsync($"Ningun horario preferido encontrado en '{periodText}'.");
+
+            if (pi < periodOrder.Count - 1)
+            {
+                // Close the popup and try next period
+                await CloseTimeSlotPopupAsync(page);
+                await ScrollToBottomAsync(page);
+                await Task.Delay(1000);
+            }
+        }
+
+        // All periods exhausted
+        await _log.LogErrorAsync("NINGUNO de los horarios preferidos esta disponible en NINGUN periodo.");
+        return null;
+    }
+
+    /// <summary>
+    /// Attempts to click a period button using multiple text patterns.
+    /// Returns true if a period button was successfully clicked.
+    /// </summary>
+    private async Task<bool> ClickPeriodButtonAsync(IPage page, string period, string primaryText)
+    {
+        // Primary attempt
+        if (await ClickButtonInRecentMessagesAsync(page, primaryText, 10000, 3))
+            return true;
+
+        // Alternative text patterns
+        var altTexts = period switch
+        {
+            "Mañana" => new[] { "mañana", "Mañana", "MAÑANA", "Turno mañana", "Turno Mañana", "Turnos Mañana" },
+            "Tarde" => new[] { "tarde", "Tarde", "TARDE", "Turno tarde", "Turno Tarde", "Turnos Tarde" },
+            "Noche" => new[] { "noche", "Noche", "NOCHE", "Turno noche", "Turno Noche", "Turnos Noche" },
+            _ => new[] { period.ToLower(), period }
+        };
+
+        foreach (var alt in altTexts)
+        {
+            if (await ClickButtonInRecentMessagesAsync(page, alt, 2000))
+                return true;
+        }
+
+        // Last resort: scroll and retry primary
+        await ScrollToBottomAsync(page);
+        await Task.Delay(3000);
+        await ScrollToBottomAsync(page);
+
+        return await ClickButtonInRecentMessagesAsync(page, primaryText, 10000, 2);
     }
 
     // ========================================================================
