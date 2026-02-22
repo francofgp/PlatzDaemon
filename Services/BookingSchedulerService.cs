@@ -119,8 +119,15 @@ public class BookingSchedulerService : BackgroundService
                     }
                 }
 
-                // After execution, wait until next day
-                await _log.LogInfoAsync("Ejecucion completada. Esperando hasta mañana...");
+                // After execution, immediately calculate next trigger for tomorrow
+                var nextNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ArgentinaTimeZone);
+                var tomorrowTrigger = nextNow.Date.AddDays(1) + triggerTimeOfDay;
+                _appState.SetNextRun(tomorrowTrigger);
+                await _appState.UpdateStatusAsync(DaemonStatus.Waiting,
+                    $"Proximo disparo: {tomorrowTrigger:dd/MM HH:mm}");
+                await _log.LogInfoAsync($"Ejecucion completada. Proximo disparo: {tomorrowTrigger:dd/MM HH:mm}");
+
+                // Brief wait before re-entering the loop to avoid tight iteration
                 await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
             }
             catch (OperationCanceledException)

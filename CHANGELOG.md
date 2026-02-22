@@ -7,7 +7,11 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
-_Sin cambios pendientes._
+### Fixed
+- **Countdown post-ejecución**: el reloj del próximo disparo quedaba en `00:00:00` después de ejecutarse. Ahora calcula inmediatamente el disparo de mañana y actualiza el dashboard vía SignalR.
+
+### Changed
+- **Documentación**: agregadas instrucciones concretas para desactivar la suspensión automática de Windows (Configuración > Energía y suspensión > "Nunca") en README y DOCS.
 
 ## [1.2.0] - 2026-02-22
 

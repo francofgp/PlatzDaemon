@@ -99,6 +99,8 @@ Esto solo pasa la primera vez que lo abrís.
 
 Dejá la computadora **prendida** (no en modo suspender/hibernar). La app se encarga de todo. Podés bloquear la pantalla con Win+L sin problema.
 
+> ⚠️ **Configurar Windows para que no se suspenda**: andá a **Configuración > Sistema > Energía y suspensión** y poné **"Nunca"** en las opciones de suspensión (tanto con batería como enchufado). Si la PC se suspende o hiberna, el programa se detiene.
+
 ### ¿Cómo sé si funcionó?
 
 - Abrí **http://localhost:5000** en tu navegador → en el **Dashboard** vas a ver los logs en tiempo real.
@@ -544,6 +546,11 @@ No debería haber riesgo. La aplicación envía como máximo unos pocos mensajes
 ### ¿Y si la computadora se bloquea (no suspendida)?
 
 **Sí, sigue corriendo.** Bloquear la pantalla (Win+L) no afecta los procesos en ejecución. Solo si la computadora **se suspende o hiberna** se detendrá.
+
+Para evitar que Windows suspenda la PC automáticamente:
+1. Ir a **Configuración > Sistema > Energía y suspensión**.
+2. En **"Suspender el equipo tras"**, poner **"Nunca"** (tanto con batería como enchufado).
+3. Opcionalmente, en **"Apagar la pantalla tras"**, podés poner lo que quieras — apagar el monitor no afecta al programa.
 
 ### ¿El navegador Chromium siempre se abre?
 

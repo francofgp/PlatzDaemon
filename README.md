@@ -85,6 +85,8 @@ Ya no necesitás despertarte a las 8 AM ni competir manualmente por las canchas.
 
 Dejá la computadora prendida (no suspendida). El programa se va a encargar de reservar la cancha automáticamente a la hora que configuraste. Podés ver el estado en tiempo real en el **Dashboard**.
 
+> ⚠️ **Importante**: asegurate de que tu PC **no entre en suspensión automática**. Andá a **Configuración > Sistema > Energía y suspensión** y poné **"Nunca"** en las opciones de suspensión (tanto con batería como enchufado). Si la PC se suspende, el programa se detiene y no va a poder reservar.
+
 > 💡 **Tip**: podés cerrar la pestaña del navegador tranquilo, el programa sigue corriendo. Podés volver a entrar a **http://localhost:5000** cuando quieras para ver cómo va. Lo que **no** tenés que cerrar es la ventana de consola negra.
 >
 > 🖥️ **Sobre la ventana de Chromium**: cuando se ejecuta la reserva, se abre una ventana de Chromium automáticamente. Si la cerrás, no pasa nada: se vuelve a abrir sola en la próxima ejecución. No perdés la sesión de WhatsApp.
