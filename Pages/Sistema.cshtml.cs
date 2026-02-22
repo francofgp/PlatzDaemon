@@ -8,6 +8,7 @@ namespace PlatzDaemon.Pages;
 public class SistemaModel : PageModel
 {
     private readonly IConfigStore _configStore;
+    private readonly BookingSchedulerService _scheduler;
 
     [BindProperty]
     public bool Enabled { get; set; }
@@ -27,9 +28,10 @@ public class SistemaModel : PageModel
     [TempData]
     public bool SavedOk { get; set; }
 
-    public SistemaModel(IConfigStore configStore)
+    public SistemaModel(IConfigStore configStore, BookingSchedulerService scheduler)
     {
         _configStore = configStore;
+        _scheduler = scheduler;
     }
 
     public void OnGet()
@@ -53,6 +55,7 @@ public class SistemaModel : PageModel
         cfg.CompetitiveMode = CompetitiveMode;
 
         await _configStore.SaveAsync(cfg);
+        _scheduler.NotifyConfigChanged();
         SavedOk = true;
         return RedirectToPage();
     }

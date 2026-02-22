@@ -1,4 +1,5 @@
 using NSubstitute;
+using PlatzDaemon.Hubs;
 using PlatzDaemon.Models;
 using PlatzDaemon.Pages;
 using PlatzDaemon.Services;
@@ -8,18 +9,36 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.SignalR;
 
 namespace PlatzDaemon.Tests.Pages;
 
 public class SistemaModelTests
 {
     private readonly IConfigStore _configStore;
+    private readonly BookingSchedulerService _scheduler;
     private readonly SistemaModel _model;
 
     public SistemaModelTests()
     {
+        var hubContext = Substitute.For<IHubContext<LogHub>>();
+        var clients = Substitute.For<IHubClients>();
+        var clientProxy = Substitute.For<IClientProxy>();
+        hubContext.Clients.Returns(clients);
+        clients.All.Returns(clientProxy);
+
         _configStore = Substitute.For<IConfigStore>();
-        _model = new SistemaModel(_configStore);
+        _configStore.Get().Returns(new BookingConfig());
+
+        var logStore = new LogStore(hubContext);
+        var appState = new AppStateService(hubContext);
+        var env = Substitute.For<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
+        env.ContentRootPath.Returns(Path.GetTempPath());
+        var notification = new NotificationService();
+        var whatsApp = new WhatsAppAutomationService(env, logStore, _configStore, notification, appState);
+
+        _scheduler = new BookingSchedulerService(_configStore, whatsApp, logStore, appState, notification);
+        _model = new SistemaModel(_configStore, _scheduler);
         SetupPageContext(_model);
     }
 

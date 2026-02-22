@@ -10,6 +10,8 @@ public class BookingSchedulerService : BackgroundService
     private readonly AppStateService _appState;
     private readonly NotificationService _notification;
 
+    private CancellationTokenSource? _configCts;
+
     // Argentina timezone (UTC-3)
     private static readonly TimeZoneInfo ArgentinaTimeZone =
         TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time");
@@ -29,6 +31,16 @@ public class BookingSchedulerService : BackgroundService
     }
 
     /// <summary>
+    /// Called by SistemaModel when the user saves config changes.
+    /// Cancels the current wait so the scheduler re-reads config immediately.
+    /// </summary>
+    public void NotifyConfigChanged()
+    {
+        try { _configCts?.Cancel(); }
+        catch (ObjectDisposedException) { /* CTS was being recycled */ }
+    }
+
+    /// <summary>
     /// Manually trigger a booking (from the UI "Ejecutar ahora" button).
     /// </summary>
     public async Task TriggerManualRunAsync()
@@ -43,6 +55,12 @@ public class BookingSchedulerService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            // Create a linked CTS so config changes can interrupt waits
+            var oldCts = _configCts;
+            _configCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+            oldCts?.Dispose();
+            var loopToken = _configCts.Token;
+
             try
             {
                 var config = _configStore.Get();
@@ -51,13 +69,13 @@ public class BookingSchedulerService : BackgroundService
                 {
                     _appState.SetNextRun(null);
                     await _appState.UpdateStatusAsync(DaemonStatus.Idle, "Deshabilitado");
-                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(5), loopToken);
                     continue;
                 }
 
                 if (!TimeSpan.TryParse(config.TriggerTime, out var triggerTimeOfDay))
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(5), loopToken);
                     continue;
                 }
 
@@ -81,7 +99,7 @@ public class BookingSchedulerService : BackgroundService
                     {
                         // Wait until pre-arm time
                         await _log.LogInfoAsync($"Modo competitivo activo. Pre-carga a las {preArmTime:HH:mm:ss}");
-                        await Task.Delay(waitUntilPreArm, stoppingToken);
+                        await Task.Delay(waitUntilPreArm, loopToken);
 
                         // Pre-arm: open browser, navigate to chat, type message
                         await _log.LogInfoAsync(">>> PRE-ARMANDO mensaje (modo competitivo)...");
@@ -92,7 +110,7 @@ public class BookingSchedulerService : BackgroundService
                         if (remainingWait.TotalMilliseconds > 0)
                         {
                             await _log.LogInfoAsync($"Mensaje listo. Esperando {remainingWait.TotalSeconds:F1}s para enviar...");
-                            await PrecisionWaitAsync(todayTrigger, stoppingToken);
+                            await PrecisionWaitAsync(todayTrigger, loopToken);
                         }
 
                         // FIRE!
@@ -101,13 +119,13 @@ public class BookingSchedulerService : BackgroundService
 
                         // Continue with rest of booking flow
                         // The main flow continues from where we left off
-                        await Task.Delay(2000, stoppingToken);
+                        await Task.Delay(2000, loopToken);
                         await _whatsApp.ExecuteBookingAsync(competitivePreArm: false);
                     }
                     else
                     {
                         // Normal mode: just wait and execute
-                        await Task.Delay(waitUntilTrigger, stoppingToken);
+                        await Task.Delay(waitUntilTrigger, loopToken);
                         await _log.LogInfoAsync(">>> Hora de disparo alcanzada!");
                         await _whatsApp.ExecuteBookingAsync(competitivePreArm: false);
                     }
@@ -122,11 +140,16 @@ public class BookingSchedulerService : BackgroundService
                 await _log.LogInfoAsync($"Ejecucion completada. Proximo disparo: {tomorrowTrigger:dd/MM HH:mm}");
 
                 // Brief wait before re-entering the loop to avoid tight iteration
-                await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(10), loopToken);
+            }
+            catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
+            {
+                // Config changed — re-enter loop to pick up new values
+                await _log.LogInfoAsync("Configuracion actualizada. Recalculando...");
             }
             catch (OperationCanceledException)
             {
-                break;
+                break; // App shutdown
             }
             catch (Exception ex)
             {
@@ -135,6 +158,8 @@ public class BookingSchedulerService : BackgroundService
                 await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
             }
         }
+
+        _configCts?.Dispose();
     }
 
     private async Task PrecisionWaitAsync(DateTime targetTime, CancellationToken ct)

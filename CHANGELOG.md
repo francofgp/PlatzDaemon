@@ -12,6 +12,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Config UI**: texto de ayuda bajo "Periodo preferido" indicando que el sistema busca automáticamente en otros periodos.
 
 ### Fixed
+- **Reloj de próximo disparo no se actualizaba al cambiar la hora**: el scheduler quedaba atrapado en un `Task.Delay` largo y no reaccionaba a cambios de configuración. Ahora usa un `CancellationTokenSource` que se interrumpe al guardar en `/sistema`, recalculando inmediatamente el próximo disparo, la cuenta regresiva y la hora de pre-carga.
 - **Selectores de radio buttons**: corregida selección de horarios en popup — ahora usa `aria-label` del `[role="radio"]` en vez de `textContent` (que contenía texto del SVG, no el horario). Agregado fallback por `[role="gridcell"]` con búsqueda del radio asociado en la misma fila.
 - **Botón de enviar popup**: corregida detección del botón verde de envío — ahora busca por `data-icon="wds-ic-send-filled"` (independiente del idioma) antes de caer a selectores por texto.
 - **FindFirstAvailableOptionAsync**: corregida selección del primer horario disponible para usar `aria-label` del radio button.
