@@ -12,6 +12,10 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Config UI**: texto de ayuda bajo "Periodo preferido" indicando que el sistema busca automáticamente en otros periodos.
 
 ### Fixed
+- **Selectores de radio buttons**: corregida selección de horarios en popup — ahora usa `aria-label` del `[role="radio"]` en vez de `textContent` (que contenía texto del SVG, no el horario). Agregado fallback por `[role="gridcell"]` con búsqueda del radio asociado en la misma fila.
+- **Botón de enviar popup**: corregida detección del botón verde de envío — ahora busca por `data-icon="wds-ic-send-filled"` (independiente del idioma) antes de caer a selectores por texto.
+- **FindFirstAvailableOptionAsync**: corregida selección del primer horario disponible para usar `aria-label` del radio button.
+- **LogVisibleOptionsAsync**: mejorado logging de debug para mostrar `aria-label` de radio buttons y texto de `gridcell` en popups abiertos.
 - **README**: corregido nombre del proyecto `court-daemon` → `PlatzDaemon` en instrucciones de instalación y estructura del proyecto.
 - **README**: agregado comando alternativo con `powershell` para instalar Playwright.
 

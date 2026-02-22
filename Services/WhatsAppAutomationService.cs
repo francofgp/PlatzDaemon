@@ -865,8 +865,36 @@ public class WhatsAppAutomationService : IAsyncDisposable
                     const maxRecent = arg.maxRecent;
 
                     // === STRATEGY 1: Check open list popup overlay ===
+                    // 1a: Radio buttons by aria-label (most reliable for WhatsApp list popups)
+                    const radios = document.querySelectorAll('[role=""radio""]');
+                    for (const radio of radios) {
+                        const label = (radio.getAttribute('aria-label') || '').trim().toLowerCase();
+                        if (label === searchText || label.includes(searchText)) {
+                            radio.scrollIntoView({ block: 'center' });
+                            radio.click();
+                            return 'CLICKED:popup:radio-aria:' + label;
+                        }
+                    }
+                    // 1b: Gridcell text → click associated radio in same row (fallback)
+                    const gridcells = document.querySelectorAll('[role=""gridcell""]');
+                    for (const cell of gridcells) {
+                        const t = (cell.textContent || '').trim().toLowerCase();
+                        if (t === searchText || t.includes(searchText)) {
+                            let row = cell.parentElement;
+                            for (let i = 0; i < 5 && row; i++) {
+                                const radio = row.querySelector('[role=""radio""]');
+                                if (radio) {
+                                    radio.scrollIntoView({ block: 'center' });
+                                    radio.click();
+                                    return 'CLICKED:popup:gridcell:' + t;
+                                }
+                                row = row.parentElement;
+                            }
+                        }
+                    }
+                    // 1c: Legacy selectors (data-testid, role=option)
                     const popupItems = document.querySelectorAll(
-                        '[data-testid=""list-msg-title""], [role=""radio""], [role=""option""]'
+                        '[data-testid=""list-msg-title""], [role=""option""]'
                     );
                     for (const item of popupItems) {
                         const t = (item.textContent || '').trim().toLowerCase();
@@ -1345,6 +1373,22 @@ public class WhatsAppAutomationService : IAsyncDisposable
     {
         try
         {
+            // Primary: find send button by data-icon attribute (most reliable, language-independent)
+            var sendClicked = await page.EvaluateAsync<bool>(@"() => {
+                const sendIcon = document.querySelector('[data-icon=""wds-ic-send-filled""]');
+                if (sendIcon) {
+                    const btn = sendIcon.closest('[role=""button""]') || sendIcon.parentElement;
+                    if (btn) {
+                        btn.click();
+                        return true;
+                    }
+                }
+                return false;
+            }");
+
+            if (sendClicked) return;
+
+            // Fallback: Playwright selectors
             var submitSelectors = new[]
             {
                 "[data-testid='list-msg-submit']",
@@ -1367,7 +1411,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
                 catch { }
             }
 
-            // JS fallback
+            // JS fallback: search by text content
             await page.EvaluateAsync(@"() => {
                 const buttons = document.querySelectorAll('div[role=""button""], button, span[role=""button""]');
                 for (const btn of buttons) {
@@ -1392,12 +1436,38 @@ public class WhatsAppAutomationService : IAsyncDisposable
         {
             // Search in popup overlay (global)
             var result = await page.EvaluateAsync<string>(@"() => {
+                // Primary: radio buttons by aria-label (WhatsApp list popup)
+                const radios = document.querySelectorAll('[role=""radio""]');
+                if (radios.length > 0) {
+                    const label = (radios[0].getAttribute('aria-label') || '').trim();
+                    if (label) {
+                        radios[0].scrollIntoView({ block: 'center' });
+                        radios[0].click();
+                        return label;
+                    }
+                }
+
+                // Fallback: gridcell text → click associated radio
+                const cells = document.querySelectorAll('[role=""gridcell""]');
+                if (cells.length > 0) {
+                    const text = (cells[0].textContent || '').trim();
+                    let row = cells[0].parentElement;
+                    for (let i = 0; i < 5 && row; i++) {
+                        const radio = row.querySelector('[role=""radio""]');
+                        if (radio) {
+                            radio.scrollIntoView({ block: 'center' });
+                            radio.click();
+                            return text;
+                        }
+                        row = row.parentElement;
+                    }
+                }
+
+                // Legacy selectors
                 const popupSelectors = [
                     '[data-testid=""list-msg-title""]',
-                    '[role=""radio""]',
                     '[role=""option""]',
                 ];
-
                 for (const selector of popupSelectors) {
                     const items = document.querySelectorAll(selector);
                     if (items.length > 0) {
@@ -1456,6 +1526,20 @@ public class WhatsAppAutomationService : IAsyncDisposable
                 }
 
                 // 2. Check for list popup (if open)
+                const radiosDbg = document.querySelectorAll('[role=""radio""]');
+                for (const radio of radiosDbg) {
+                    const label = (radio.getAttribute('aria-label') || '').trim();
+                    if (label) {
+                        results.push('📋 [radio] ' + label);
+                    }
+                }
+                const gridcellsDbg = document.querySelectorAll('[role=""gridcell""]');
+                for (const cell of gridcellsDbg) {
+                    const text = cell.textContent.trim();
+                    if (text && text.length > 1 && text.length < 100) {
+                        results.push('📋 [gridcell] ' + text);
+                    }
+                }
                 const listItems = document.querySelectorAll('[role=""listitem""], [role=""option""], [data-testid=""list-msg-item""]');
                 for (const item of listItems) {
                     const text = item.textContent.trim();
