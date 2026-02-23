@@ -7,6 +7,10 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-02-23
+
+> 🎉 **Milestone: primer flujo completo exitoso.** Con esta versión el daemon logró ejecutar el ciclo entero de reserva de forma autónoma por primera vez — desde abrir el chat del bot, navegar menús, seleccionar horario, cancha y tipo de juego, hasta confirmar y detectar el mensaje de éxito. Todos los bugs críticos de interacción con el DOM de WhatsApp fueron corregidos.
+
 ### Added
 - **Busqueda dinámica de periodos**: el sistema ahora busca los horarios preferidos en TODOS los periodos disponibles (Mañana, Tarde, Noche), no solo en el periodo configurado. Empieza por el periodo preferido y, si no encuentra horarios, cierra el popup con Escape y prueba el siguiente periodo automáticamente.
 - **Config UI**: texto de ayuda bajo "Periodo preferido" indicando que el sistema busca automáticamente en otros periodos.
@@ -92,7 +96,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Validación de horarios**: formato `HH:MMhs` con auto-formateo y detección de duplicados.
 - **CI/CD**: GitHub Actions workflow para publicar releases automáticamente con tags.
 
-[Unreleased]: https://github.com/francofgp/PlatzDaemon/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/francofgp/PlatzDaemon/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/francofgp/PlatzDaemon/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/francofgp/PlatzDaemon/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/francofgp/PlatzDaemon/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/francofgp/PlatzDaemon/compare/v1.0.0...v1.1.0
