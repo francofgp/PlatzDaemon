@@ -5,6 +5,11 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.5.4] - 2026-02-23
+
+### Added
+- **Prevención de suspensión (SleepPreventionService)**: cuando hay un próximo disparo programado en las próximas X horas (por defecto 6), el daemon indica al sistema operativo que no suspenda la PC. Al no haber tarea próxima o al deshabilitar, se libera el bloqueo. Por OS: Windows (SetThreadExecutionState), Linux (systemd-inhibit), macOS (caffeinate). Fallos se registran en el Terminal de logs; la app no crashea si la inhibición falla. Al cerrar la app la prevención se desactiva y la PC puede suspenderse con normalidad. Configuración opcional en `SleepPrevention:HoursAhead`, `PollIntervalMinutes`, `InhibitProcessTimeoutSeconds`.
+
 ## [1.5.3] - 2026-02-23
 
 ### Changed

@@ -19,9 +19,11 @@ builder.Services.AddSingleton<LogStore>();
 builder.Services.AddSingleton<AppStateService>();
 builder.Services.AddSingleton<WhatsAppAutomationService>();
 builder.Services.AddSingleton<BookingSchedulerService>();
+builder.Services.AddSingleton<SleepPreventionService>();
 
 // Register the scheduler as a hosted background service
 builder.Services.AddHostedService(sp => sp.GetRequiredService<BookingSchedulerService>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<SleepPreventionService>());
 
 var app = builder.Build();
 

@@ -207,4 +207,27 @@ public class BookingSchedulerService : BackgroundService
             return $"{ts.Minutes}m {ts.Seconds}s";
         return $"{ts.Seconds}s";
     }
+
+    /// <summary>
+    /// Current time in Argentina timezone (same as used by the scheduler loop).
+    /// </summary>
+    public DateTime GetNowArgentina()
+    {
+        return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ArgentinaTimeZone);
+    }
+
+    /// <summary>
+    /// Next scheduled run based on config (Enabled + TriggerTime). Returns null if disabled or invalid trigger.
+    /// Read-only; does not update AppState.
+    /// </summary>
+    public DateTime? GetNextScheduledRun()
+    {
+        var config = _configStore.Get();
+        if (!config.Enabled)
+            return null;
+        if (!TimeSpan.TryParse(config.TriggerTime, out var triggerTimeOfDay))
+            return null;
+        var now = GetNowArgentina();
+        return CalculateNextTrigger(now, triggerTimeOfDay);
+    }
 }
