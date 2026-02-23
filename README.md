@@ -163,6 +163,8 @@ Dejá la computadora prendida (no suspendida). El programa se va a encargar de r
 ## 🔧 Para desarrolladores
 
 > Las secciones siguientes son para usuarios técnicos que quieran compilar, modificar o contribuir al proyecto.
+>
+> 📚 **Documentación técnica completa**: si querés entender la arquitectura, los servicios, el flujo de reserva, Playwright, o cómo modificar el código, consultá **[docs/](docs/)** — documentación estilo DeepWiki pensada para desarrolladores.
 
 ### Requisitos de desarrollo
 
