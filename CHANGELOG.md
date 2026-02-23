@@ -7,8 +7,13 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-02-23
+
 ### Added
 - **Screenshots en README**: sección "Interfaz" con capturas de las 4 pantallas (Dashboard, Mi Reserva, Sistema, WhatsApp). El dashboard se muestra directo y las otras 3 en `<details>` colapsables.
+
+### Fixed
+- **Versión hardcodeada en navbar**: el layout mostraba "Platz Daemon v1.0" fijo. Ahora se lee dinámicamente desde el `AssemblyVersion` del proyecto, reflejando siempre la versión actual del `.csproj`.
 
 ## [1.4.0] - 2026-02-23
 

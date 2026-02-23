@@ -15,7 +15,7 @@
     <AssemblyName>PlatzDaemon</AssemblyName>
     <Product>Platz Daemon</Product>
     <Description>Automatizacion de reservas de canchas de tenis via WhatsApp</Description>
-    <Version>1.4.0</Version>
+    <Version>1.4.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
