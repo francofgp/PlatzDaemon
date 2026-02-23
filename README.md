@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.5.2-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.5.3-blue" alt="Version">
   <img src="https://img.shields.io/badge/ASP.NET%20Core-10.0-purple" alt="ASP.NET Core">
   <img src="https://img.shields.io/badge/Playwright-1.51-green" alt="Playwright">
   <img src="https://img.shields.io/badge/Platform-Windows%20|%20Linux%20|%20macOS-0078D4" alt="Platform">

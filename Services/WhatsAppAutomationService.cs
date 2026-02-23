@@ -76,7 +76,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
         }
     }
 
-    private static bool IsBrowserInstalled()
+    internal static bool IsBrowserInstalled()
     {
         try
         {
@@ -87,7 +87,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
         catch { return false; }
     }
 
-    private static string GetPlaywrightBrowsersPath()
+    internal static string GetPlaywrightBrowsersPath()
     {
         var envPath = Environment.GetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH");
         if (!string.IsNullOrEmpty(envPath)) return envPath;

@@ -52,6 +52,14 @@
     </div>
 </div>
 
+@if (Model.NeedsChromiumDownload)
+{
+    <div class="terminal-alert terminal-alert-primary">
+        <strong>Primera ejecucion:</strong> al conectar WhatsApp se descargara el navegador Chromium (~140 MB).
+        Esto puede tardar unos minutos. La pagina se actualizara sola cuando termine.
+    </div>
+}
+
 <div class="action-buttons mt-2">
     @if (!Model.IsBrowserOpen)
     {

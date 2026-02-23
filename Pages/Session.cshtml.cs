@@ -16,6 +16,7 @@ public class SessionModel : PageModel
     public string? Message { get; set; }
     public string MessageCss { get; set; } = "";
     public string BrowserDataPath { get; set; } = "";
+    public bool NeedsChromiumDownload { get; set; }
 
     public SessionModel(WhatsAppAutomationService whatsApp, AppStateService appState, IWebHostEnvironment env)
     {
@@ -78,5 +79,6 @@ public class SessionModel : PageModel
         IsBrowserOpen = _whatsApp.IsSessionActive;
         HasSavedSession = _whatsApp.HasSavedSessionData;
         BrowserDataPath = Path.Combine(_env.ContentRootPath, "Data", "browser-data");
+        NeedsChromiumDownload = !WhatsAppAutomationService.IsBrowserInstalled();
     }
 }

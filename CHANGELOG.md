@@ -5,6 +5,11 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.5.3] - 2026-02-23
+
+### Changed
+- **Aviso en pagina Session**: cuando Chromium no esta instalado, la pagina WhatsApp muestra un aviso antes del boton "Conectar WhatsApp" indicando que la primera conexion descargara Chromium (~140 MB) y puede tardar unos minutos.
+
 ## [1.5.2] - 2026-02-23
 
 ### Changed
@@ -129,7 +134,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Validación de horarios**: formato `HH:MMhs` con auto-formateo y detección de duplicados.
 - **CI/CD**: GitHub Actions workflow para publicar releases automáticamente con tags.
 
-[Unreleased]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.2...HEAD
+[Unreleased]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.3...HEAD
+[1.5.3]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/francofgp/PlatzDaemon/compare/v1.4.1...v1.5.0
