@@ -53,12 +53,59 @@ public class WhatsAppAutomationService : IAsyncDisposable
 
     private async Task EnsureBrowserInstalledAsync()
     {
-        await _log.LogInfoAsync("Verificando navegador Chromium...");
+        var needsDownload = !IsBrowserInstalled();
+
+        if (needsDownload)
+        {
+            await _log.LogInfoAsync("Primera ejecucion: descargando navegador Chromium (~140 MB). Esto puede tardar unos minutos...");
+        }
+
         var exitCode = Microsoft.Playwright.Program.Main(new[] { "install", "chromium" });
+
         if (exitCode != 0)
+        {
             await _log.LogWarningAsync($"Playwright install retorno codigo {exitCode}");
+        }
+        else if (needsDownload)
+        {
+            await _log.LogSuccessAsync("Chromium descargado e instalado correctamente.");
+        }
         else
+        {
             await _log.LogInfoAsync("Chromium verificado.");
+        }
+    }
+
+    private static bool IsBrowserInstalled()
+    {
+        try
+        {
+            var browsersPath = GetPlaywrightBrowsersPath();
+            if (!Directory.Exists(browsersPath)) return false;
+            return Directory.GetDirectories(browsersPath, "chromium-*").Length > 0;
+        }
+        catch { return false; }
+    }
+
+    private static string GetPlaywrightBrowsersPath()
+    {
+        var envPath = Environment.GetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH");
+        if (!string.IsNullOrEmpty(envPath)) return envPath;
+
+        if (OperatingSystem.IsWindows())
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "ms-playwright");
+
+        if (OperatingSystem.IsMacOS())
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                "Library", "Caches", "ms-playwright");
+
+        return Path.Combine(
+            Environment.GetEnvironmentVariable("XDG_CACHE_HOME")
+                ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cache"),
+            "ms-playwright");
     }
 
     /// <summary>
