@@ -495,13 +495,37 @@ public class WhatsAppAutomationService : IAsyncDisposable
                     }
                 }
 
-                // Wait for final confirmation message
+                // Wait for final confirmation or rejection (poll for up to 20s)
                 await _log.LogInfoAsync("Esperando resultado de la confirmacion...");
-                await Task.Delay(3000);
-                await ScrollToBottomAsync(page);
+                bool confirmed = false;
+                bool rejected = false;
+                var confirmSw = Stopwatch.StartNew();
+                int confirmPoll = 0;
+                while (confirmSw.ElapsedMilliseconds < 20000)
+                {
+                    await Task.Delay(2000);
+                    await ScrollToBottomAsync(page);
+                    confirmPoll++;
 
-                // CHECK: Did the bot reject at the last moment? (court taken by someone else)
-                if (await CheckForCourtRejectionAsync(page))
+                    if (await CheckForCourtRejectionAsync(page))
+                    {
+                        rejected = true;
+                        break;
+                    }
+                    if (await CheckForConfirmationInRecentAsync(page))
+                    {
+                        confirmed = true;
+                        break;
+                    }
+
+                    if (confirmPoll % 3 == 0)
+                    {
+                        await _log.LogInfoAsync($"  Esperando confirmacion... ({confirmSw.ElapsedMilliseconds / 1000}s)");
+                    }
+                }
+
+                // HANDLE: Court rejected at the last moment
+                if (rejected)
                 {
                     await _log.LogWarningAsync("=== CANCHA RECHAZADA ===");
                     await _log.LogInfoAsync("La cancha fue reservada por otra persona justo antes de confirmar.");
@@ -521,8 +545,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
                     }
                 }
 
-                // CHECK: Successful confirmation?
-                var confirmed = await CheckForConfirmationInRecentAsync(page);
+                // HANDLE: Successful confirmation
                 if (confirmed)
                 {
                     var resultMsg = $"RESERVA CONFIRMADA - {selectedTime} - {selectedCourt}";
@@ -534,7 +557,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
                 }
                 else
                 {
-                    await _log.LogWarningAsync("No se detecto mensaje de confirmacion. Revisar WhatsApp manualmente.");
+                    await _log.LogWarningAsync("No se detecto mensaje de confirmacion despues de 20s. Revisar WhatsApp manualmente.");
                     await _appState.UpdateStatusAsync(DaemonStatus.Completed, $"Posible reserva: {selectedTime} - {selectedCourt} (verificar)");
                     _notification.NotifySuccess("Platz Daemon", $"Posible reserva realizada: {selectedTime} - {selectedCourt}. Verificar en WhatsApp.");
                     return true;
@@ -737,8 +760,9 @@ public class WhatsAppAutomationService : IAsyncDisposable
     }
 
     /// <summary>
-    /// Counts the current number of message elements in the conversation.
-    /// Uses multiple strategies and logs which one works for debugging.
+    /// Counts the current number of INCOMING message elements in the conversation.
+    /// Only counts message-in (bot responses) to avoid false positives from outgoing
+    /// messages created by button clicks. Uses fallback strategies for other WhatsApp versions.
     /// </summary>
     private async Task<int> GetMessageCountAsync(IPage page, bool logDebug = false)
     {
@@ -777,8 +801,12 @@ public class WhatsAppAutomationService : IAsyncDisposable
                     $"data-id={byDataId}, focusable={byFocusable}, role=row={byRole}, panel-children={byPanelChildren}");
             }
 
-            // Use the first strategy that returns a meaningful count
-            if (byClassIn + byClassOut > 0) return byClassIn + byClassOut;
+            // Primary: count only INCOMING messages (message-in).
+            // This prevents outgoing messages from button clicks from inflating the count
+            // and causing WaitForBotResponseAsync to return before the bot actually responds.
+            if (byClassIn > 0) return byClassIn;
+
+            // Fallback strategies (for unusual WhatsApp versions where message-in class is absent)
             if (byDataId > 0) return byDataId;
             if (byRole > 0) return byRole;
             if (byFocusable > 0) return byFocusable;
@@ -790,11 +818,10 @@ public class WhatsAppAutomationService : IAsyncDisposable
     }
 
     /// <summary>
-    /// Waits until new messages appear in the chat (message count increases).
-    /// After we send a message or click a button, we expect:
-    ///   - Our action adds 1 message (outgoing)
-    ///   - The bot responds adding 1+ messages (incoming)
-    /// So we wait for count to increase by at least 2.
+    /// Waits until a new INCOMING message appears in the chat.
+    /// Since GetMessageCountAsync now counts only message-in elements,
+    /// outgoing messages from button clicks don't inflate the count.
+    /// We only need the count to increase by 1 (one bot response).
     /// </summary>
     private async Task<bool> WaitForBotResponseAsync(IPage page, int countBefore, int timeoutMs = 20000)
     {
@@ -807,7 +834,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
             return true;
         }
 
-        var targetCount = countBefore + 2; // Our message + bot response
+        var targetCount = countBefore + 1; // At least 1 new incoming message
         var sw = Stopwatch.StartNew();
         var pollNum = 0;
 
@@ -825,16 +852,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
 
             if (currentCount >= targetCount)
             {
-                await Task.Delay(1000);
-                await ScrollToBottomAsync(page);
-                await _log.LogInfoAsync($"Nuevos mensajes detectados ({currentCount - countBefore} nuevos).");
-                return true;
-            }
-
-            // Also accept if count went up by at least 1 (bot may combine in one message)
-            if (currentCount > countBefore)
-            {
-                await Task.Delay(2000); // Extra wait for full message render
+                await Task.Delay(1500); // Extra wait for full message render
                 await ScrollToBottomAsync(page);
                 await _log.LogInfoAsync($"Mensaje(s) nuevo(s) detectado(s) ({currentCount - countBefore} nuevo(s)).");
                 return true;
@@ -843,7 +861,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
 
         // Final check
         var finalCount = await GetMessageCountAsync(page);
-        if (finalCount > countBefore)
+        if (finalCount >= targetCount)
         {
             await Task.Delay(1000);
             await ScrollToBottomAsync(page);
@@ -951,12 +969,29 @@ public class WhatsAppAutomationService : IAsyncDisposable
                         '[data-testid*=""list""], [data-testid*=""quick_reply""], ' +
                         'span.selectable-text, div.quoted-mention';
 
-                    // First pass: exact match on clickable elements
+                    // Normalize: strip leading/trailing emojis and symbols, keep only text
+                    const normalize = (t) => t.replace(/^[^\p{L}\p{N}]+/u, '').replace(/[^\p{L}\p{N}]+$/u, '').toLowerCase().trim();
+                    const searchNorm = normalize(searchText);
+
+                    // Word-boundary check: ensures search is a whole word, not a substring
+                    // e.g. ""si"" must NOT match inside ""single""
+                    const isWordMatch = (text, search) => {
+                        const idx = text.indexOf(search);
+                        if (idx === -1) return false;
+                        const before = idx > 0 ? text.charAt(idx - 1) : '';
+                        const after = idx + search.length < text.length ? text.charAt(idx + search.length) : '';
+                        const isAlpha = (ch) => /[\p{L}\p{N}]/u.test(ch);
+                        return (!before || !isAlpha(before)) && (!after || !isAlpha(after));
+                    };
+
+                    // First pass: exact match on clickable elements (with emoji normalization)
+                    // ""✅Si"" normalizes to ""si"" → exact match with ""si""
                     for (const msg of [...recent].reverse()) {
                         const clickables = msg.querySelectorAll(clickableSelector);
                         for (const el of [...clickables].reverse()) {
                             const elText = (el.textContent || '').trim().toLowerCase();
-                            if (elText === searchText) {
+                            const elNorm = normalize(elText);
+                            if (elText === searchText || elNorm === searchNorm) {
                                 el.scrollIntoView({ block: 'center' });
                                 el.click();
                                 return 'CLICKED:' + strategy + ':exact:' + elText;
@@ -964,12 +999,14 @@ public class WhatsAppAutomationService : IAsyncDisposable
                         }
                     }
 
-                    // Second pass: contains match on clickable elements
+                    // Second pass: word-boundary contains match on clickable elements
+                    // ""si"" matches in ""✅si"" but NOT in ""👤single""
                     for (const msg of [...recent].reverse()) {
                         const clickables = msg.querySelectorAll(clickableSelector);
                         for (const el of [...clickables].reverse()) {
                             const elText = (el.textContent || '').trim().toLowerCase();
-                            if (elText.includes(searchText)) {
+                            const elNorm = normalize(elText);
+                            if (isWordMatch(elNorm, searchNorm) || isWordMatch(elText, searchText)) {
                                 el.scrollIntoView({ block: 'center' });
                                 el.click();
                                 return 'CLICKED:' + strategy + ':contains:' + elText;
@@ -983,7 +1020,8 @@ public class WhatsAppAutomationService : IAsyncDisposable
                         const spans = msg.querySelectorAll('span');
                         for (const span of [...spans].reverse()) {
                             const t = (span.textContent || '').trim().toLowerCase();
-                            if (t === searchText && span.offsetParent !== null) {
+                            const tNorm = normalize(t);
+                            if ((t === searchText || tNorm === searchNorm) && span.offsetParent !== null) {
                                 span.scrollIntoView({ block: 'center' });
                                 span.click();
                                 return 'CLICKED:' + strategy + ':span:' + t;
@@ -1164,6 +1202,10 @@ public class WhatsAppAutomationService : IAsyncDisposable
                     await _log.LogInfoAsync("Popup de lista de canchas abierto.");
                     await Task.Delay(1500);
                 }
+                else
+                {
+                    await _log.LogWarningAsync($"No se pudo abrir popup de canchas (intento {attempt}/3). Buscando en mensajes...");
+                }
 
                 // Try preferred courts
                 foreach (var preferred in preferredCourts)
@@ -1319,8 +1361,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
                 for (const msg of recent) {
                     const text = (msg.textContent || '').toLowerCase();
                     if (text.includes('confirmad') || text.includes('éxito') ||
-                        text.includes('reservado') || text.includes('reserva realizada') ||
-                        text.includes('confirmando turno')) {
+                        text.includes('reservado') || text.includes('reserva realizada')) {
                         return true;
                     }
                 }
@@ -1355,7 +1396,19 @@ public class WhatsAppAutomationService : IAsyncDisposable
                 const recent = messages.slice(-5);
 
                 for (const msg of [...recent].reverse()) {
-                    // Try data-testid selectors for list action buttons
+                    // 1. Primary: find list-msg-icon (the ≡ icon inside list buttons)
+                    const listIcon = msg.querySelector('[data-icon=""list-msg-icon""]');
+                    if (listIcon) {
+                        let target = listIcon.closest('button, [role=""button""]');
+                        if (!target) target = listIcon.parentElement?.closest('button, [role=""button""]');
+                        if (target) {
+                            target.scrollIntoView({ block: 'center' });
+                            target.click();
+                            return true;
+                        }
+                    }
+
+                    // 2. Try data-testid selectors for list action buttons
                     const listBtns = msg.querySelectorAll(
                         '[data-testid=""list-msg-action""], [data-testid=""list-msg-action-button""]'
                     );
@@ -1364,11 +1417,15 @@ public class WhatsAppAutomationService : IAsyncDisposable
                         return true;
                     }
 
-                    // Fallback: look for buttons with text like 'Ver opciones'
+                    // 3. Fallback: look for buttons with matching keywords
                     const allBtns = msg.querySelectorAll('div[role=""button""], span[role=""button""], button');
                     for (const btn of allBtns) {
                         const text = (btn.textContent || '').trim().toLowerCase();
-                        const keywords = ['ver opciones', 'seleccionar', 'elegir', 'ver horarios', 'ver canchas', 'opciones'];
+                        const keywords = [
+                            'ver opciones', 'seleccionar', 'elegir',
+                            'ver horarios', 'ver canchas', 'opciones',
+                            'canchas', 'turnos'
+                        ];
                         if (keywords.some(k => text.includes(k))) {
                             btn.click();
                             return true;
@@ -1542,7 +1599,11 @@ public class WhatsAppAutomationService : IAsyncDisposable
                     }
                 }
 
-                // 2. Check for list popup (if open)
+                // 2. Check for list popup (if open) - scope to dialog only,
+                //    NOT document-wide (to avoid picking up sidebar gridcells)
+                const popup = document.querySelector('[role=""dialog""]');
+                const popupScope = popup || (main ? main : null);
+
                 const radiosDbg = document.querySelectorAll('[role=""radio""]');
                 for (const radio of radiosDbg) {
                     const label = (radio.getAttribute('aria-label') || '').trim();
@@ -1550,18 +1611,20 @@ public class WhatsAppAutomationService : IAsyncDisposable
                         results.push('📋 [radio] ' + label);
                     }
                 }
-                const gridcellsDbg = document.querySelectorAll('[role=""gridcell""]');
-                for (const cell of gridcellsDbg) {
-                    const text = cell.textContent.trim();
-                    if (text && text.length > 1 && text.length < 100) {
-                        results.push('📋 [gridcell] ' + text);
+                if (popupScope) {
+                    const gridcellsDbg = popupScope.querySelectorAll('[role=""gridcell""]');
+                    for (const cell of gridcellsDbg) {
+                        const text = cell.textContent.trim();
+                        if (text && text.length > 1 && text.length < 100) {
+                            results.push('📋 [gridcell] ' + text);
+                        }
                     }
-                }
-                const listItems = document.querySelectorAll('[role=""listitem""], [role=""option""], [data-testid=""list-msg-item""]');
-                for (const item of listItems) {
-                    const text = item.textContent.trim();
-                    if (text && text.length > 1 && text.length < 100) {
-                        results.push('📋 ' + text);
+                    const listItems = popupScope.querySelectorAll('[role=""listitem""], [role=""option""], [data-testid=""list-msg-item""]');
+                    for (const item of listItems) {
+                        const text = item.textContent.trim();
+                        if (text && text.length > 1 && text.length < 100) {
+                            results.push('📋 ' + text);
+                        }
                     }
                 }
 
