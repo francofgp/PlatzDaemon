@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.5.3-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.5.5-blue" alt="Version">
   <img src="https://img.shields.io/badge/ASP.NET%20Core-10.0-purple" alt="ASP.NET Core">
   <img src="https://img.shields.io/badge/Playwright-1.51-green" alt="Playwright">
   <img src="https://img.shields.io/badge/Platform-Windows%20|%20Linux%20|%20macOS-0078D4" alt="Platform">
@@ -141,10 +141,10 @@ Conexión y verificación de WhatsApp Web, instrucciones para escanear el QR e i
 
 Dejá la computadora prendida (no suspendida). El programa se va a encargar de reservar la cancha automáticamente a la hora que configuraste. Podés ver el estado en tiempo real en el **Dashboard**.
 
-> ⚠️ **Importante**: asegurate de que tu PC **no entre en suspensión automática**. Si la PC se suspende, el programa se detiene y no va a poder reservar.
-> - **Windows**: Configuración > Sistema > Energía y suspensión → "Nunca".
-> - **Linux**: `systemd-inhibit --what=idle sleep` o configurar desde las opciones de energía.
-> - **macOS**: Ajustes del Sistema > Pantalla de bloqueo → desactivar suspensión automática.
+> **Prevención de suspensión:** La app evita que la PC se **suspenda** cuando hay un próximo disparo en las próximas horas (por defecto 6). Aun así, conviene revisar la **configuración de energía** de tu PC: desactivar la suspensión automática o ponerla en "Nunca" para estar seguro.
+>
+> - **Windows**: Configuración > Sistema > Energía y suspensión → "Nunca" (o dejar que la app evite la suspensión). Usá **"Suspender"** (dormir), no **"Hibernar"** — la prevención no evita la hibernación.
+> - **Linux / macOS**: La app usa `systemd-inhibit` / `caffeinate` cuando corresponde; si querés, además podés desactivar la suspensión en las opciones de energía del sistema.
 
 > 💡 **Tip**: podés cerrar la pestaña del navegador tranquilo, el programa sigue corriendo. Podés volver a entrar a **http://localhost:5000** cuando quieras para ver cómo va. Lo que **no** tenés que cerrar es la ventana de consola negra.
 >

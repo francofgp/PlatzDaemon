@@ -7,6 +7,10 @@
 <h2>/// Sistema</h2>
 <p class="text-muted">Configuracion del sistema y datos del socio. Estos valores rara vez cambian una vez configurados.</p>
 
+<div class="terminal-alert terminal-alert-primary mb-3">
+    <strong>Prevencion de suspension:</strong> Cuando hay un proximo disparo en las proximas horas, la app evita que la PC se suspenda. Revisa la configuracion de energia de tu PC: desactiva la suspension automatica o dejala en &quot;Nunca&quot; si quieres estar seguro. En <strong>Windows</strong>, usa &quot;Suspender&quot; (dormir) y no &quot;Hibernar&quot;; la prevencion no evita la hibernacion.
+</div>
+
 @if (Model.SavedOk)
 {
     <div class="terminal-alert terminal-alert-primary">Configuracion del sistema guardada exitosamente.</div>

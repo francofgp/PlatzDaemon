@@ -5,6 +5,11 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.5.5] - 2026-02-23
+
+### Changed
+- **Nota prevención de suspensión**: en la pantalla Sistema se muestra un aviso que explica que la app evita la suspensión cuando hay un próximo disparo, recomienda revisar la configuración de energía de la PC (o desactivar suspensión) y aclara que en Windows debe usarse "Suspender" y no "Hibernar". Misma información actualizada en el README (Paso 6).
+
 ## [1.5.4] - 2026-02-23
 
 ### Added
