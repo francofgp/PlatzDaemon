@@ -33,6 +33,53 @@ Ya no necesitás despertarte a las 8 AM ni competir manualmente por las canchas.
 
 ---
 
+## 🖥️ Interfaz
+
+La aplicación tiene 4 pantallas, todas con estética retro de terminal verde sobre negro.
+
+### Dashboard (`/`)
+
+Panel principal con estado del daemon, cuenta regresiva al próximo disparo, resumen de la reserva configurada y terminal de logs en tiempo real.
+
+<p align="center">
+  <img src="assets/screenshoots/home.png" alt="Dashboard" width="700">
+</p>
+
+<details>
+<summary><strong>Mi Reserva</strong> (<code>/config</code>) — Configuración de la reserva</summary>
+<br>
+
+Periodo preferido, tipo de juego, día de reserva, horarios prioritarios y canchas prioritarias (ordenados por prioridad).
+
+<p align="center">
+  <img src="assets/screenshoots/config.png" alt="Mi Reserva" width="700">
+</p>
+</details>
+
+<details>
+<summary><strong>Sistema</strong> (<code>/sistema</code>) — Configuración del sistema</summary>
+<br>
+
+Automatización habilitada/deshabilitada, hora de disparo, modo competitivo, número del bot de WhatsApp y DNI del socio.
+
+<p align="center">
+  <img src="assets/screenshoots/sistema.png" alt="Sistema" width="700">
+</p>
+</details>
+
+<details>
+<summary><strong>WhatsApp</strong> (<code>/session</code>) — Gestión de sesión</summary>
+<br>
+
+Conexión y verificación de WhatsApp Web, instrucciones para escanear el QR e información de la sesión guardada.
+
+<p align="center">
+  <img src="assets/screenshoots/session.png" alt="WhatsApp Session" width="700">
+</p>
+</details>
+
+---
+
 ## 📥 Descarga e instalación (no se necesita instalar nada)
 
 > **Para usuarios que solo quieren usar la app.** No necesitás saber programar ni instalar herramientas. Solo seguí estos pasos.

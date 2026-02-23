@@ -7,6 +7,9 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Added
+- **Screenshots en README**: sección "Interfaz" con capturas de las 4 pantallas (Dashboard, Mi Reserva, Sistema, WhatsApp). El dashboard se muestra directo y las otras 3 en `<details>` colapsables.
+
 ## [1.4.0] - 2026-02-23
 
 > 🎉 **Milestone: primer flujo completo exitoso.** Con esta versión el daemon logró ejecutar el ciclo entero de reserva de forma autónoma por primera vez — desde abrir el chat del bot, navegar menús, seleccionar horario, cancha y tipo de juego, hasta confirmar y detectar el mensaje de éxito. Todos los bugs críticos de interacción con el DOM de WhatsApp fueron corregidos.
