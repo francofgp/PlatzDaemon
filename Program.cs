@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using PlatzDaemon.Hubs;
 using PlatzDaemon.Services;
 
@@ -16,7 +17,6 @@ builder.Services.AddSingleton<ConfigStore>();
 builder.Services.AddSingleton<IConfigStore>(sp => sp.GetRequiredService<ConfigStore>());
 builder.Services.AddSingleton<LogStore>();
 builder.Services.AddSingleton<AppStateService>();
-builder.Services.AddSingleton<NotificationService>();
 builder.Services.AddSingleton<WhatsAppAutomationService>();
 builder.Services.AddSingleton<BookingSchedulerService>();
 
@@ -36,7 +36,7 @@ app.UseStaticFiles();
 app.MapRazorPages();
 app.MapHub<LogHub>("/loghub");
 
-// Auto-open browser in production mode
+// Auto-open browser in production mode (cross-platform)
 if (!app.Environment.IsDevelopment())
 {
     _ = Task.Run(async () =>
@@ -44,11 +44,13 @@ if (!app.Environment.IsDevelopment())
         await Task.Delay(1500);
         try
         {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "http://localhost:5000",
-                UseShellExecute = true
-            });
+            var url = "http://localhost:5000";
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                Process.Start("open", url);
+            else
+                Process.Start("xdg-open", url);
         }
         catch { }
     });

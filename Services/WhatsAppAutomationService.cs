@@ -11,7 +11,6 @@ public class WhatsAppAutomationService : IAsyncDisposable
     private readonly IWebHostEnvironment _env;
     private readonly LogStore _log;
     private readonly IConfigStore _configStore;
-    private readonly NotificationService _notification;
     private readonly AppStateService _appState;
 
     private IPlaywright? _playwright;
@@ -42,13 +41,11 @@ public class WhatsAppAutomationService : IAsyncDisposable
         IWebHostEnvironment env,
         LogStore log,
         IConfigStore configStore,
-        NotificationService notification,
         AppStateService appState)
     {
         _env = env;
         _log = log;
         _configStore = configStore;
-        _notification = notification;
         _appState = appState;
         _browserDataPath = Path.Combine(env.ContentRootPath, "Data", "browser-data");
         Directory.CreateDirectory(_browserDataPath);
@@ -413,7 +410,6 @@ public class WhatsAppAutomationService : IAsyncDisposable
                     await _log.LogInfoAsync("El bot indico que ya existe una reserva activa.");
                     await _log.LogInfoAsync("Si necesitas cancelarla, hacelo manualmente en WhatsApp.");
                     await _appState.UpdateStatusAsync(DaemonStatus.Completed, "Ya tiene turno reservado");
-                    _notification.NotifySuccess("Platz Daemon", "Ya tenes un turno reservado. Cancelalo primero si queres sacar otro.");
                     return false;
                 }
                 else if (blocker == "no_slots")
@@ -422,7 +418,6 @@ public class WhatsAppAutomationService : IAsyncDisposable
                     await _log.LogInfoAsync("El bot indico que hoy ya no hay turnos disponibles.");
                     await _log.LogInfoAsync("Espera hasta mañana para reservar un turno.");
                     await _appState.UpdateStatusAsync(DaemonStatus.Completed, "No hay turnos disponibles hoy");
-                    _notification.NotifyError("Platz Daemon", "Hoy ya no hay turnos disponibles. Esperá hasta mañana.");
                     return false;
                 }
 
@@ -433,7 +428,6 @@ public class WhatsAppAutomationService : IAsyncDisposable
                 if (selectedTime == null)
                 {
                     await _appState.UpdateStatusAsync(DaemonStatus.Error, "Horarios no disponibles en ningun periodo");
-                    _notification.NotifyError("Platz Daemon", "No hay horarios disponibles en ningún periodo.");
                     return false;
                 }
 
@@ -533,14 +527,12 @@ public class WhatsAppAutomationService : IAsyncDisposable
                     if (attempt < maxAttempts)
                     {
                         await _log.LogInfoAsync($"Reintentando automaticamente... (intento {attempt + 1}/{maxAttempts})");
-                        _notification.NotifyError("Platz Daemon", $"Cancha ocupada. Reintentando ({attempt + 1}/{maxAttempts})...");
                         continue; // Retry the whole flow
                     }
                     else
                     {
                         await _log.LogErrorAsync($"Se agotaron los {maxAttempts} intentos. Todas las canchas fueron tomadas.");
                         await _appState.UpdateStatusAsync(DaemonStatus.Error, "Cancha tomada - intentos agotados");
-                        _notification.NotifyError("Platz Daemon", $"No se pudo reservar despues de {maxAttempts} intentos. Las canchas fueron tomadas.");
                         return false;
                     }
                 }
@@ -552,14 +544,12 @@ public class WhatsAppAutomationService : IAsyncDisposable
                     await _log.LogSuccessAsync(resultMsg);
                     await _log.LogInfoAsync("=== RESERVA EXITOSA ===");
                     await _appState.UpdateStatusAsync(DaemonStatus.Completed, resultMsg);
-                    _notification.NotifySuccess("Platz Daemon - Reserva Exitosa!", $"{selectedTime} - {selectedCourt} - {config.GameType}");
                     return true;
                 }
                 else
                 {
                     await _log.LogWarningAsync("No se detecto mensaje de confirmacion despues de 20s. Revisar WhatsApp manualmente.");
                     await _appState.UpdateStatusAsync(DaemonStatus.Completed, $"Posible reserva: {selectedTime} - {selectedCourt} (verificar)");
-                    _notification.NotifySuccess("Platz Daemon", $"Posible reserva realizada: {selectedTime} - {selectedCourt}. Verificar en WhatsApp.");
                     return true;
                 }
             } // end retry loop
@@ -582,14 +572,12 @@ public class WhatsAppAutomationService : IAsyncDisposable
 
             await _log.LogErrorAsync("No se pudo completar la reserva tras reintentar con nuevo navegador.");
             await _appState.UpdateStatusAsync(DaemonStatus.Error, "Navegador cerrado - multiples intentos fallidos");
-            _notification.NotifyError("Platz Daemon", "El navegador se cerro durante la reserva. No se pudo reintentar.");
             return false;
         }
         catch (Exception ex)
         {
             await _log.LogErrorAsync($"Error durante la reserva: {ex.Message}");
             await _appState.UpdateStatusAsync(DaemonStatus.Error, ex.Message);
-            _notification.NotifyError("Platz Daemon - Error", ex.Message);
             return false;
         }
         finally

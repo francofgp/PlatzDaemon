@@ -34,10 +34,9 @@ public class SistemaModelTests
         var appState = new AppStateService(hubContext);
         var env = Substitute.For<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
         env.ContentRootPath.Returns(Path.GetTempPath());
-        var notification = new NotificationService();
-        var whatsApp = new WhatsAppAutomationService(env, logStore, _configStore, notification, appState);
+        var whatsApp = new WhatsAppAutomationService(env, logStore, _configStore, appState);
 
-        _scheduler = new BookingSchedulerService(_configStore, whatsApp, logStore, appState, notification);
+        _scheduler = new BookingSchedulerService(_configStore, whatsApp, logStore, appState);
         _model = new SistemaModel(_configStore, _scheduler);
         SetupPageContext(_model);
     }

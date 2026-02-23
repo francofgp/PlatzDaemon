@@ -10,8 +10,21 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
-    runs-on: windows-latest
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            artifact: PlatzDaemon-win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+            artifact: PlatzDaemon-linux-x64
+          - os: macos-latest
+            rid: osx-arm64
+            artifact: PlatzDaemon-osx-arm64
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: 📥 Checkout código
@@ -25,32 +38,54 @@ jobs:
       - name: 🧪 Ejecutar tests
         run: dotnet test --configuration Release --settings coverage.runsettings
 
-      - name: 📦 Publicar EXE (self-contained, single-file)
-        run: dotnet publish PlatzDaemon.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish
+      - name: 📦 Publicar (self-contained, single-file)
+        run: dotnet publish PlatzDaemon.csproj -c Release -r ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish
 
-      - name: 🗜️ Empaquetar en ZIP
-        run: Compress-Archive -Path ./publish/* -DestinationPath ./PlatzDaemon-${{ github.ref_name }}-win-x64.zip
+      - name: 🗜️ Empaquetar ZIP (Windows)
+        if: runner.os == 'Windows'
+        run: Compress-Archive -Path ./publish/* -DestinationPath ./${{ matrix.artifact }}-${{ github.ref_name }}.zip
+
+      - name: 🗜️ Empaquetar tar.gz (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: tar -czf ./${{ matrix.artifact }}-${{ github.ref_name }}.tar.gz -C ./publish .
+
+      - name: 📤 Subir artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            ./${{ matrix.artifact }}-${{ github.ref_name }}.zip
+            ./${{ matrix.artifact }}-${{ github.ref_name }}.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+
+      - name: 📥 Descargar todos los artefactos
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
 
       - name: 📝 Extraer notas del CHANGELOG
         id: changelog
-        shell: pwsh
         run: |
-          $version = "${{ github.ref_name }}" -replace '^v', ''
-          $content = Get-Content CHANGELOG.md -Raw
-          # Extraer la sección de la versión actual (entre ## [version] y el siguiente ## [)
-          if ($content -match "(?s)## \[$version\][^\r\n]*\r?\n(.*?)(?=\r?\n## \[|$)") {
-            $notes = $Matches[1].Trim()
-          } else {
-            $notes = "Release ${{ github.ref_name }}"
-          }
-          # Guardar en archivo para evitar problemas con caracteres especiales
-          $notes | Out-File -FilePath release-notes.md -Encoding utf8
+          version="${{ github.ref_name }}"
+          version="${version#v}"
+          notes=$(awk "/^## \[${version}\]/{found=1; next} /^## \[/{if(found) exit} found{print}" CHANGELOG.md)
+          if [ -z "$notes" ]; then
+            notes="Release ${{ github.ref_name }}"
+          fi
+          echo "$notes" > release-notes.md
 
       - name: 🚀 Crear Release en GitHub
         uses: softprops/action-gh-release@v2
         with:
           name: "🎾 PlatzDaemon ${{ github.ref_name }}"
           body_path: release-notes.md
-          files: ./PlatzDaemon-${{ github.ref_name }}-win-x64.zip
+          files: ./artifacts/**/*
           draft: false
           prerelease: false

@@ -32,9 +32,9 @@ Muchos clubes de tenis habilitan los turnos a una hora específica (ej: 8:00 AM)
 - 🏎️ **Modo competitivo**: pre-carga el mensaje 20 segundos antes y lo envía en el milisegundo exacto.
 - 🔄 **Reintentos automáticos**: si una cancha es tomada por otro usuario durante la reserva, reintenta automáticamente (hasta 3 veces).
 - 📋 **Prioridades configurables**: define múltiples horarios y canchas en orden de preferencia.
-- 📊 **Dashboard en tiempo real**: logs, estado, cuenta regresiva y notificaciones vía SignalR.
-- 🔔 **Notificaciones de escritorio**: alerta de Windows cuando la reserva se completa o falla.
+- 📊 **Dashboard en tiempo real**: logs, estado, cuenta regresiva vía SignalR.
 - 💾 **Sesión persistente**: el login de WhatsApp Web se guarda; no necesitás escanear el QR cada vez.
+- 🌐 **Multi-plataforma**: funciona en Windows, Linux y macOS.
 - 🖥️ **Interfaz retro**: UI con tema de terminal verde sobre negro usando `terminal.css`.
 
 ---
@@ -52,25 +52,25 @@ GitHub es una plataforma donde se guardan programas. Vos no necesitás crear cue
 
 1. **Ir a la página de descarga**: buscá el link de **"Releases"** en la página principal del proyecto (generalmente [acá](../../releases/latest)). Si te pasaron un link directo a Releases, mejor todavía.
 
-2. **Encontrar el archivo para descargar**: en la página de Releases, bajá hasta donde dice **"Assets"** (activos). Ahí vas a ver archivos para descargar. Buscá el que diga algo como **`PlatzDaemon-v1.0.0-win-x64.zip`** y hacé click para descargarlo.
+2. **Encontrar el archivo para descargar**: en la página de Releases, bajá hasta donde dice **"Assets"** (activos). Ahí vas a ver archivos para descargar. Elegí el correspondiente a tu sistema operativo (ej: `PlatzDaemon-win-x64-v*.zip` para Windows, `PlatzDaemon-linux-x64-v*.tar.gz` para Linux, `PlatzDaemon-osx-arm64-v*.tar.gz` para macOS).
 
-3. **Extraer el ZIP**:
-   - Andá a tu carpeta de **Descargas**.
-   - Hacé **click derecho** en el archivo `.zip` → **"Extraer todo..."**
-   - Elegí dónde querés guardarlo. Recomiendo: `C:\PlatzDaemon` o en el Escritorio.
+3. **Extraer**:
+   - **Windows**: click derecho en el `.zip` → **"Extraer todo..."** → elegí dónde guardarlo (ej: `C:\PlatzDaemon`).
+   - **Linux / macOS**: `tar -xzf PlatzDaemon-*.tar.gz -C ~/PlatzDaemon`
 
 4. **Ejecutar**:
-   - Abrí la carpeta que extrajiste.
-   - Buscá **`PlatzDaemon.exe`** y hacé **doble click**.
+   - **Windows**: doble click en **`PlatzDaemon.exe`**.
+   - **Linux / macOS**: `./PlatzDaemon` desde la terminal.
 
-### Windows me muestra una advertencia azul, ¿qué hago?
+### Me muestra una advertencia de seguridad, ¿qué hago?
 
-Es normal. Windows muestra una advertencia ("Windows protegió tu equipo") con cualquier programa nuevo descargado de internet. Para continuar:
+Es normal con programas descargados de internet.
 
-1. Hacé click en **"Más información"** (es un link chiquito que aparece abajo del texto).
-2. Hacé click en **"Ejecutar de todas formas"**.
+- **Windows** (SmartScreen): click en **"Más información"** → **"Ejecutar de todas formas"**.
+- **macOS** (Gatekeeper): Preferencias del Sistema > Seguridad → **"Abrir de todos modos"**.
+- **Linux**: puede necesitar `chmod +x PlatzDaemon` para dar permisos de ejecución.
 
-Esto solo pasa la primera vez que lo abrís.
+Esto solo pasa la primera vez.
 
 ### ¿Qué pasa cuando ejecuto el programa?
 
@@ -99,12 +99,14 @@ Esto solo pasa la primera vez que lo abrís.
 
 Dejá la computadora **prendida** (no en modo suspender/hibernar). La app se encarga de todo. Podés bloquear la pantalla con Win+L sin problema.
 
-> ⚠️ **Configurar Windows para que no se suspenda**: andá a **Configuración > Sistema > Energía y suspensión** y poné **"Nunca"** en las opciones de suspensión (tanto con batería como enchufado). Si la PC se suspende o hiberna, el programa se detiene.
+> ⚠️ **Evitar suspensión automática**: si la PC se suspende o hiberna, el programa se detiene.
+> - **Windows**: Configuración > Sistema > Energía y suspensión → "Nunca".
+> - **Linux**: configurar desde opciones de energía del escritorio o `systemd-inhibit`.
+> - **macOS**: Ajustes del Sistema > Pantalla de bloqueo → desactivar suspensión.
 
 ### ¿Cómo sé si funcionó?
 
 - Abrí **http://localhost:5000** en tu navegador → en el **Dashboard** vas a ver los logs en tiempo real.
-- También te llega una **notificación de Windows** cuando la reserva se confirma o falla.
 - Podés verificar directamente en **WhatsApp** mirando la conversación con el bot.
 
 ### ¿Cómo paro el programa?
@@ -117,7 +119,7 @@ Cerrá la **ventana negra de consola**. Eso para todo.
 
 ### ¿Funciona en Mac o Linux?
 
-No. Actualmente solo funciona en **Windows 10 o 11** (64 bits).
+**Sí.** Platz Daemon es multi-plataforma. Funciona en **Windows**, **Linux** y **macOS**. Descargá el binario correspondiente a tu sistema desde la página de Releases.
 
 ---
 
@@ -168,7 +170,6 @@ No. Actualmente solo funciona en **Windows 10 o 11** (64 bits).
 | `ConfigStore` | Carga y guarda la configuración en `Data/config.json`. |
 | `LogStore` | Almacena logs en memoria y los emite vía SignalR al Dashboard. |
 | `AppStateService` | Mantiene el estado de la app (Idle, Waiting, Running, Completed, Error) y lo notifica vía SignalR. |
-| `NotificationService` | Envía notificaciones de escritorio de Windows (toast). |
 | `LogHub` | Hub de SignalR para comunicación en tiempo real con el navegador. |
 
 Todos los servicios se registran como **Singleton** para compartir estado en toda la aplicación.
@@ -437,15 +438,22 @@ dotnet run --environment Production
 
 Se abre automáticamente en `http://localhost:5000` en el navegador por defecto.
 
-### Publicar como EXE (manual)
+### Publicar ejecutable (manual)
 
 ```bash
+# Windows
 dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+
+# Linux
+dotnet publish -c Release -r linux-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+
+# macOS (Apple Silicon)
+dotnet publish -c Release -r osx-arm64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-Genera un EXE self-contained en `bin/Release/net10.0-windows/win-x64/publish/`.
+Genera un ejecutable self-contained en `bin/Release/net10.0/<rid>/publish/`.
 
-Para distribuir: comprimir la carpeta `publish/` en un ZIP.
+Para distribuir: comprimir la carpeta `publish/`.
 
 > **Nota**: el EXE incluye el runtime de .NET, no requiere instalación adicional en la PC del usuario.
 
@@ -454,13 +462,13 @@ Para distribuir: comprimir la carpeta `publish/` en un ZIP.
 Después de compilar o publicar, se necesitan los navegadores de Playwright:
 
 ```bash
-pwsh bin/Debug/net10.0-windows/win-x64/playwright.ps1 install chromium
+pwsh bin/Debug/net10.0/playwright.ps1 install chromium
 ```
 
 O en la ruta de publicación:
 
 ```bash
-pwsh bin/Release/net10.0-windows/win-x64/publish/playwright.ps1 install chromium
+pwsh bin/Release/net10.0/<rid>/publish/playwright.ps1 install chromium
 ```
 
 ### Publicar Release automáticamente con GitHub Actions
@@ -471,10 +479,10 @@ El proyecto incluye un workflow en `.github/workflows/release.yml` que **compila
 
 1. Vos creás un tag con formato `v*.*.*` (ej: `v1.0.0`).
 2. GitHub Actions se dispara automáticamente y:
-   - Compila el proyecto en un runner `windows-latest`.
-   - Genera el EXE self-contained con `dotnet publish`.
-   - Lo empaqueta en `PlatzDaemon-v1.0.0-win-x64.zip`.
-   - Crea un Release en GitHub con el ZIP adjunto, listo para descargar.
+   - Compila el proyecto en **paralelo** para Windows, Linux y macOS.
+   - Genera ejecutables self-contained con `dotnet publish`.
+   - Los empaqueta (`.zip` para Windows, `.tar.gz` para Linux/macOS).
+   - Crea un Release en GitHub con los binarios de las 3 plataformas.
 
 #### Publicar una nueva versión
 
@@ -545,12 +553,7 @@ No debería haber riesgo. La aplicación envía como máximo unos pocos mensajes
 
 ### ¿Y si la computadora se bloquea (no suspendida)?
 
-**Sí, sigue corriendo.** Bloquear la pantalla (Win+L) no afecta los procesos en ejecución. Solo si la computadora **se suspende o hiberna** se detendrá.
-
-Para evitar que Windows suspenda la PC automáticamente:
-1. Ir a **Configuración > Sistema > Energía y suspensión**.
-2. En **"Suspender el equipo tras"**, poner **"Nunca"** (tanto con batería como enchufado).
-3. Opcionalmente, en **"Apagar la pantalla tras"**, podés poner lo que quieras — apagar el monitor no afecta al programa.
+**Sí, sigue corriendo.** Bloquear la pantalla no afecta los procesos en ejecución. Solo si la computadora **se suspende o hiberna** se detendrá. Asegurate de desactivar la suspensión automática en la configuración de energía de tu sistema operativo.
 
 ### ¿El navegador Chromium siempre se abre?
 
@@ -570,10 +573,9 @@ Sí. Configurá el **Día de reserva** en "Mañana" y ajustá la **Hora de dispa
 
 ### ¿Cómo sé si la reserva fue exitosa?
 
-De tres formas:
+De dos formas:
 1. **Dashboard**: el log muestra "RESERVA CONFIRMADA" con el horario y cancha.
-2. **Notificación de Windows**: aparece un toast en el escritorio.
-3. **WhatsApp**: podés abrir la conversación con el bot para verificar.
+2. **WhatsApp**: podés abrir la conversación con el bot para verificar.
 
 ### ¿Puedo ejecutar la reserva manualmente?
 
@@ -617,10 +619,14 @@ Puede pasar si WhatsApp desvincula el dispositivo (por inactividad prolongada o 
 
 ### Error al compilar: "The file is locked"
 
-Si el EXE está en ejecución, no se puede recompilar. Cerrá la aplicación o usá:
+Si el ejecutable está en ejecución, no se puede recompilar. Cerrá la aplicación o usá:
 
 ```bash
+# Windows
 taskkill /F /IM PlatzDaemon.exe
+
+# Linux / macOS
+pkill PlatzDaemon
 ```
 
 ---
@@ -629,7 +635,7 @@ taskkill /F /IM PlatzDaemon.exe
 
 ### Zona horaria
 
-Toda la lógica de scheduling usa **hora Argentina (UTC-3)**, independientemente de la zona horaria de la PC. Se usa `TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time")`.
+Toda la lógica de scheduling usa **hora Argentina (UTC-3)**, independientemente de la zona horaria de la PC. Se resuelve automáticamente usando el ID de Windows (`Argentina Standard Time`), el ID IANA (`America/Argentina/Buenos_Aires`), o un fallback manual a UTC-3, según la plataforma.
 
 ### Persistencia de configuración
 
@@ -657,10 +663,6 @@ Los botones de WhatsApp (como "Hoy", "Turnos noche", etc.) se buscan en los **ú
 ### Concurrencia
 
 Se usa un `SemaphoreSlim(1, 1)` para serializar el acceso al navegador. Solo una operación de automatización puede ejecutarse a la vez.
-
-### Notificaciones de Windows
-
-Se usa `Microsoft.Toolkit.Uwp.Notifications` para toasts de Windows y `System.Media.SystemSounds` para el sonido de notificación. Estas APIs son específicas de Windows.
 
 ### Puerto por defecto
 

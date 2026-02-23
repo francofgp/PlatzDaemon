@@ -69,6 +69,7 @@ terminalcss.html
 
 # ── Test coverage ──
 coverage/
+**/TestResults/
 
 # ── Release zips ──
 *.zip

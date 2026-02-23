@@ -9,11 +9,12 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/version-1.5.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/ASP.NET%20Core-10.0-purple" alt="ASP.NET Core">
   <img src="https://img.shields.io/badge/Playwright-1.51-green" alt="Playwright">
-  <img src="https://img.shields.io/badge/Platform-Windows%20x64-blue" alt="Platform">
-  <img src="https://img.shields.io/badge/coverage-67.8%25-brightgreen" alt="Coverage">
-  <img src="https://img.shields.io/badge/tests-98%20passed-brightgreen" alt="Tests">
+  <img src="https://img.shields.io/badge/Platform-Windows%20|%20Linux%20|%20macOS-0078D4" alt="Platform">
+  <img src="https://img.shields.io/badge/tests-91%20passed-brightgreen" alt="Tests">
+  <img src="https://img.shields.io/badge/coverage-65.3%25-brightgreen" alt="Coverage">
 </p>
 
 Platz Daemon es una aplicación de escritorio que automatiza el proceso de reserva de canchas de tenis a través del bot de WhatsApp de tu club. Se ejecuta como un servidor local con interfaz web retro estilo terminal de los '90.
@@ -88,27 +89,31 @@ Conexión y verificación de WhatsApp Web, instrucciones para escanear el QR e i
 
 1. Entrá a la página de **Releases** del proyecto: [click acá para ir a Releases](../../releases/latest).
 2. En esa página, bajá hasta la sección **Assets** (está abajo de todo).
-3. Descargá el archivo **`PlatzDaemon-v1.0.0-win-x64.zip`** (o la versión más reciente).
+3. Descargá el archivo correspondiente a tu sistema operativo:
+   - **Windows**: `PlatzDaemon-win-x64-v*.*.*.zip`
+   - **Linux**: `PlatzDaemon-linux-x64-v*.*.*.tar.gz`
+   - **macOS**: `PlatzDaemon-osx-arm64-v*.*.*.tar.gz`
 
-> 💡 **¿Qué es esa página?** Es simplemente la página de descarga del programa. El archivo ZIP contiene todo lo necesario para ejecutarlo.
+> 💡 **¿Qué es esa página?** Es simplemente la página de descarga del programa. El archivo contiene todo lo necesario para ejecutarlo.
 
-### Paso 2 — Extraer el ZIP
+### Paso 2 — Extraer
 
-1. Buscá el archivo `.zip` que descargaste (generalmente queda en tu carpeta **Descargas**).
-2. Hacé **click derecho** sobre el ZIP → **"Extraer todo..."** → Elegí una carpeta donde quieras guardar la app (ej: `C:\PlatzDaemon`).
-3. Se va a crear una carpeta con varios archivos adentro.
+**Windows**: click derecho sobre el ZIP → **"Extraer todo..."** → Elegí una carpeta (ej: `C:\PlatzDaemon`).
+
+**Linux / macOS**: `tar -xzf PlatzDaemon-*.tar.gz -C ~/PlatzDaemon`
 
 ### Paso 3 — Ejecutar
 
 1. Abrí la carpeta que extrajiste.
-2. Buscá el archivo **`PlatzDaemon.exe`** y hacé **doble click** para ejecutarlo.
+2. Ejecutá el binario:
+   - **Windows**: doble click en **`PlatzDaemon.exe`**.
+   - **Linux / macOS**: `./PlatzDaemon` desde la terminal.
 
-> ⚠️ **Windows puede mostrar una advertencia** diciendo "Windows protegió tu equipo" (pantalla azul de SmartScreen). Esto pasa con cualquier programa nuevo descargado de internet. Para continuar:
-> 1. Hacé click en **"Más información"**.
-> 2. Hacé click en **"Ejecutar de todas formas"**.
-> Esto solo pasa la primera vez.
+> ⚠️ **Windows**: puede mostrar una advertencia de SmartScreen ("Windows protegió tu equipo"). Hacé click en **"Más información"** → **"Ejecutar de todas formas"**. Solo pasa la primera vez.
+>
+> ⚠️ **macOS**: puede bloquear la ejecución. Andá a **Preferencias del Sistema > Seguridad** y hacé click en **"Abrir de todos modos"**.
 
-3. Se va a abrir una **ventana de consola negra** (es normal, no la cierres) y automáticamente se abre tu **navegador** con la interfaz de Platz Daemon.
+3. Se va a abrir una **ventana de consola** (es normal, no la cierres) y automáticamente se abre tu **navegador** con la interfaz de Platz Daemon.
 
 > 🌐 Si el navegador no se abre solo, abrí manualmente **http://localhost:5000** en Chrome, Edge, Firefox, o el navegador que uses.
 
@@ -134,7 +139,10 @@ Conexión y verificación de WhatsApp Web, instrucciones para escanear el QR e i
 
 Dejá la computadora prendida (no suspendida). El programa se va a encargar de reservar la cancha automáticamente a la hora que configuraste. Podés ver el estado en tiempo real en el **Dashboard**.
 
-> ⚠️ **Importante**: asegurate de que tu PC **no entre en suspensión automática**. Andá a **Configuración > Sistema > Energía y suspensión** y poné **"Nunca"** en las opciones de suspensión (tanto con batería como enchufado). Si la PC se suspende, el programa se detiene y no va a poder reservar.
+> ⚠️ **Importante**: asegurate de que tu PC **no entre en suspensión automática**. Si la PC se suspende, el programa se detiene y no va a poder reservar.
+> - **Windows**: Configuración > Sistema > Energía y suspensión → "Nunca".
+> - **Linux**: `systemd-inhibit --what=idle sleep` o configurar desde las opciones de energía.
+> - **macOS**: Ajustes del Sistema > Pantalla de bloqueo → desactivar suspensión automática.
 
 > 💡 **Tip**: podés cerrar la pestaña del navegador tranquilo, el programa sigue corriendo. Podés volver a entrar a **http://localhost:5000** cuando quieras para ver cómo va. Lo que **no** tenés que cerrar es la ventana de consola negra.
 >
@@ -144,11 +152,11 @@ Dejá la computadora prendida (no suspendida). El programa se va a encargar de r
 
 | Qué hacer | Cómo |
 |---|---|
-| **Descargar** | Ir a Releases → descargar el ZIP |
-| **Instalar** | No se instala nada, solo extraer el ZIP |
-| **Ejecutar** | Doble click en `PlatzDaemon.exe` |
+| **Descargar** | Ir a Releases → descargar para tu plataforma |
+| **Instalar** | No se instala nada, solo extraer |
+| **Ejecutar** | `PlatzDaemon.exe` (Win) / `./PlatzDaemon` (Linux/macOS) |
 | **Configurar** | Desde el navegador en `http://localhost:5000` |
-| **Parar la app** | Cerrar la ventana de consola negra |
+| **Parar la app** | Cerrar la consola (o `Ctrl+C`) |
 
 ---
 
@@ -158,7 +166,7 @@ Dejá la computadora prendida (no suspendida). El programa se va a encargar de r
 
 ### Requisitos de desarrollo
 
-- **Windows 10/11** (x64)
+- **Windows 10+**, **Linux** o **macOS**
 - **.NET 10 SDK** ([descargar](https://dotnet.microsoft.com/download))
 - **WhatsApp** vinculado a tu teléfono
 - Conexión a internet estable
@@ -176,13 +184,13 @@ dotnet build
 #### 2. Instalar navegador de Playwright
 
 ```bash
-pwsh bin/Debug/net10.0-windows/win-x64/playwright.ps1 install chromium
+pwsh bin/Debug/net10.0/playwright.ps1 install chromium
 ```
 
-Si no tenés `pwsh`, usá `powershell`:
+Si no tenés `pwsh`, usá `powershell` (Windows):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File bin/Debug/net10.0-windows/win-x64/playwright.ps1 install chromium
+powershell -ExecutionPolicy Bypass -File bin/Debug/net10.0/playwright.ps1 install chromium
 ```
 
 #### 3. Ejecutar la aplicación
@@ -213,15 +221,22 @@ El reporte HTML se genera en `coverage/report/index.html`.
 
 > 💡 Los tests se ejecutan automáticamente en GitHub Actions en cada push a `main` y en cada pull request. También se ejecutan antes de crear un Release.
 
-### Publicar como EXE
+### Publicar ejecutable
 
 Para generar un ejecutable distribuible (self-contained, no requiere .NET instalado):
 
 ```bash
+# Windows
 dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+
+# Linux
+dotnet publish -c Release -r linux-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+
+# macOS (Apple Silicon)
+dotnet publish -c Release -r osx-arm64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-El resultado queda en `bin/Release/net10.0-windows/win-x64/publish/`. Para distribuir, comprimir esa carpeta en un ZIP y subirla a GitHub Releases.
+El resultado queda en `bin/Release/net10.0/<rid>/publish/`. Para distribuir, comprimir esa carpeta y subirla a GitHub Releases.
 
 ### Crear un Release en GitHub (automático)
 
@@ -233,11 +248,11 @@ git push origin v1.0.0
 ```
 
 Esto dispara el workflow `.github/workflows/release.yml` que:
-1. Ejecuta todos los tests (si fallan, el release se cancela).
-2. Compila el proyecto en `windows-latest`.
-3. Genera el EXE self-contained.
-4. Lo empaqueta en `PlatzDaemon-v1.0.0-win-x64.zip`.
-5. Crea el Release en GitHub con el ZIP listo para descargar.
+1. Ejecuta todos los tests.
+2. Compila el proyecto para **Windows**, **Linux** y **macOS** en paralelo.
+3. Genera ejecutables self-contained para cada plataforma.
+4. Los empaqueta (`.zip` para Windows, `.tar.gz` para Linux/macOS).
+5. Crea el Release en GitHub con los binarios de las 3 plataformas.
 
 Para la próxima versión: `git tag v1.1.0 && git push origin v1.1.0`, y así.
 
@@ -263,7 +278,6 @@ PlatzDaemon/
 │   ├── ConfigStore.cs                # Persistencia de configuración
 │   ├── IConfigStore.cs               # Interfaz para testing
 │   ├── LogStore.cs                   # Almacén de logs + SignalR
-│   ├── NotificationService.cs       # Notificaciones Windows
 │   └── AppStateService.cs           # Estado de la aplicación
 ├── Models/                   # Modelos de datos
 │   ├── BookingConfig.cs      # Modelo de configuración

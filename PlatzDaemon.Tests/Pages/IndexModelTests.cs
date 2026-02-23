@@ -29,9 +29,8 @@ public class IndexModelTests
 
         var env = Substitute.For<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
         env.ContentRootPath.Returns(Path.GetTempPath());
-        var notification = new NotificationService();
-        var whatsApp = new WhatsAppAutomationService(env, _logStore, _configStore, notification, _appState);
-        var scheduler = new BookingSchedulerService(_configStore, whatsApp, _logStore, _appState, notification);
+        var whatsApp = new WhatsAppAutomationService(env, _logStore, _configStore, _appState);
+        var scheduler = new BookingSchedulerService(_configStore, whatsApp, _logStore, _appState);
 
         _model = new IndexModel(_logStore, _appState, scheduler, _configStore, whatsApp);
     }

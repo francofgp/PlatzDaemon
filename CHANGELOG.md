@@ -5,7 +5,20 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
-## [Unreleased]
+## [1.5.0] - 2026-02-23
+
+### Changed
+- **Multi-plataforma**: el proyecto ahora compila y corre en **Windows**, **Linux** y **macOS**. TFM cambiado de `net10.0-windows` a `net10.0`, eliminado `RuntimeIdentifier` y `Microsoft.Windows.Compatibility`.
+- **CI/CD multi-plataforma**: `ci.yml` ahora corre en `ubuntu-latest`. `release.yml` usa matrix build para generar binarios de 3 plataformas (`win-x64`, `linux-x64`, `osx-arm64`) en paralelo. Windows genera `.zip`, Linux/macOS generan `.tar.gz`. Changelog se extrae con `awk` en bash.
+- **Auto-open browser**: detección de OS con `RuntimeInformation.IsOSPlatform` → `Process.Start` (Windows), `open` (macOS), `xdg-open` (Linux).
+- **Timezone cross-platform**: nuevo helper `ResolveArgentinaTimeZone()` que prueba Windows ID (`Argentina Standard Time`), IANA ID (`America/Argentina/Buenos_Aires`), y fallback manual UTC-3.
+- **Docs**: README y DOCS actualizados con instrucciones multi-plataforma, badges, rutas y comandos para las 3 plataformas.
+- **Badges**: badge de versión, tests (91) y coverage (65.3%) actualizados. Agregado badge de versión.
+- **`.gitignore`**: agregado `**/TestResults/` para ignorar artefactos de coverage.
+
+### Removed
+- **NotificationService**: eliminadas las notificaciones toast de Windows y los sonidos (`System.Media.SystemSounds`). Se removió el servicio, sus tests, y todas las ~15 referencias en 5 archivos. La complejidad no justificaba el beneficio — el resultado se verifica en el Dashboard o en WhatsApp.
+- **Microsoft.Windows.Compatibility**: paquete NuGet eliminado (ya no se necesitan APIs de Windows).
 
 ## [1.4.1] - 2026-02-23
 
@@ -94,7 +107,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Reintentos automáticos**: hasta 3 reintentos si la cancha es tomada por otro usuario.
 - **Limpieza de conversaciones**: envía "Salir" para resetear el bot antes de cada intento.
 - **Dashboard en tiempo real**: logs con colores, estado del daemon, cuenta regresiva y estado de WhatsApp vía SignalR.
-- **Notificaciones de escritorio**: toasts de Windows al confirmar o fallar la reserva.
+- **Notificaciones de escritorio**: toasts de Windows al confirmar o fallar la reserva (removido en versiones posteriores).
 - **Sesión persistente**: datos de WhatsApp Web guardados en `Data/browser-data/`.
 - **Interfaz retro**: tema de terminal verde sobre negro con `terminal.css`.
 - **Configuración separada**: "Mi Reserva" (horarios, canchas, preferencias) y "Sistema" (DNI, hora de disparo, modo competitivo).

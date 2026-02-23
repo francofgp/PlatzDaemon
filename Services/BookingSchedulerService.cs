@@ -8,26 +8,33 @@ public class BookingSchedulerService : BackgroundService
     private readonly WhatsAppAutomationService _whatsApp;
     private readonly LogStore _log;
     private readonly AppStateService _appState;
-    private readonly NotificationService _notification;
 
     private CancellationTokenSource? _configCts;
 
-    // Argentina timezone (UTC-3)
-    private static readonly TimeZoneInfo ArgentinaTimeZone =
-        TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time");
+    // Argentina timezone (UTC-3) — resolved cross-platform
+    private static readonly TimeZoneInfo ArgentinaTimeZone = ResolveArgentinaTimeZone();
+
+    private static TimeZoneInfo ResolveArgentinaTimeZone()
+    {
+        // Windows uses "Argentina Standard Time", Linux/macOS use IANA IDs
+        if (TimeZoneInfo.TryFindSystemTimeZoneById("Argentina Standard Time", out var tz))
+            return tz;
+        if (TimeZoneInfo.TryFindSystemTimeZoneById("America/Argentina/Buenos_Aires", out tz))
+            return tz;
+        // Fallback: UTC-3 fixed (Argentina has no daylight saving time)
+        return TimeZoneInfo.CreateCustomTimeZone("AR", TimeSpan.FromHours(-3), "Argentina", "Argentina");
+    }
 
     public BookingSchedulerService(
         IConfigStore configStore,
         WhatsAppAutomationService whatsApp,
         LogStore log,
-        AppStateService appState,
-        NotificationService notification)
+        AppStateService appState)
     {
         _configStore = configStore;
         _whatsApp = whatsApp;
         _log = log;
         _appState = appState;
-        _notification = notification;
     }
 
     /// <summary>
