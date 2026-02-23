@@ -222,6 +222,24 @@ Luego abrir con: `npx playwright show-trace trace.zip`
 
 Playwright necesita un browser descargado localmente. No usa Chrome del sistema.
 
+### Auto-instalacion en el EXE publicado
+
+A partir de v1.5, la app instala Chromium automaticamente la primera vez que se conecta WhatsApp. El metodo `EnsureBrowserInstalledAsync()` en `WhatsAppAutomationService` llama a `Microsoft.Playwright.Program.Main(new[] { "install", "chromium" })` antes de cada `Playwright.CreateAsync()`. Si Chromium ya esta instalado, retorna inmediatamente sin descargar nada.
+
+Esto significa que el usuario final **no necesita ejecutar ningun comando manual**. La primera ejecucion tarda unos segundos extra (~100 MB de descarga).
+
+### Por que no se usa IncludeNativeLibrariesForSelfExtract
+
+Al publicar como single-file (`PublishSingleFile=true`), la propiedad `IncludeNativeLibrariesForSelfExtract=true` empaqueta los binarios nativos **dentro** del EXE. Esto incluye el driver Node.js de Playwright (`.playwright/node/win32_x64/node.exe`).
+
+El problema es que Playwright busca el driver en disco, en `AppContext.BaseDirectory + ".playwright/..."`. Si `node.exe` esta empaquetado dentro del EXE, no existe en disco y Playwright falla con:
+
+```
+Driver not found: D:\.playwright\node\win32_x64\node.exe
+```
+
+**Solucion**: no usar `IncludeNativeLibrariesForSelfExtract`. Los archivos nativos (incluyendo `.playwright/`) quedan como archivos sueltos al lado del EXE. Todo se empaqueta en el ZIP de release y el usuario extrae y ejecuta igual que antes.
+
 ### En desarrollo
 
 ```bash

@@ -5,6 +5,13 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.5.1] - 2026-02-23
+
+### Fixed
+- **Playwright "Driver not found" en EXE publicado**: el EXE se publicaba con `IncludeNativeLibrariesForSelfExtract=true`, que empaquetaba el driver Node.js de Playwright dentro del single-file. Playwright buscaba el driver en disco y fallaba con `Driver not found: D:\.playwright\node\win32_x64\node.exe`. Se eliminó la propiedad del `.csproj` y del `release.yml` para que `.playwright/` quede al lado del EXE.
+- **Auto-instalación de Chromium**: agregado `EnsureBrowserInstalledAsync()` que llama a `Microsoft.Playwright.Program.Main(new[] { "install", "chromium" })` antes de cada uso de Playwright. La primera ejecución descarga Chromium automáticamente (~100 MB). Ejecuciones posteriores no descargan nada.
+- **Docs**: actualizado README con nota sobre la descarga automática de Chromium y corregidos los comandos de publicación. Actualizado `docs/playwright-guide.md` con explicación del problema y la solución. Agregados escenarios de troubleshooting en `docs/maintenance.md`.
+
 ## [1.5.0] - 2026-02-23
 
 ### Changed
@@ -117,7 +124,10 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Validación de horarios**: formato `HH:MMhs` con auto-formateo y detección de duplicados.
 - **CI/CD**: GitHub Actions workflow para publicar releases automáticamente con tags.
 
-[Unreleased]: https://github.com/francofgp/PlatzDaemon/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.0...v1.5.1
+[1.5.0]: https://github.com/francofgp/PlatzDaemon/compare/v1.4.1...v1.5.0
+[1.4.1]: https://github.com/francofgp/PlatzDaemon/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/francofgp/PlatzDaemon/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/francofgp/PlatzDaemon/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/francofgp/PlatzDaemon/compare/v1.1.0...v1.2.0

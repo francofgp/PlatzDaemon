@@ -119,6 +119,26 @@ Toda la logica de scheduling esta hardcodeada a Argentina (UTC-3). Si se quisier
 
 ## Troubleshooting avanzado
 
+### "Driver not found: D:\.playwright\node\win32_x64\node.exe"
+
+Este error ocurre si el EXE fue publicado con `IncludeNativeLibrariesForSelfExtract=true`. Esa propiedad empaqueta los binarios nativos (incluyendo el driver Node.js de Playwright) dentro del EXE single-file. Playwright espera encontrar el driver en disco, no embebido.
+
+**Solucion:**
+1. Verificar que `PlatzDaemon.csproj` **no** tenga `<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>`.
+2. Verificar que `release.yml` **no** pase `-p:IncludeNativeLibrariesForSelfExtract=true` al `dotnet publish`.
+3. Re-publicar. El directorio de publish tendra el EXE + `.playwright/` + otros archivos nativos al lado.
+
+Si ya tenes un EXE publicado con el bug: descargar la version corregida desde Releases.
+
+### "Playwright install retorno codigo X" (distinto de 0)
+
+La auto-instalacion de Chromium fallo. Posibles causas:
+- Sin conexion a internet (la primera vez necesita descargar ~100 MB).
+- Firewall o proxy bloqueando la descarga.
+- Permisos insuficientes en el directorio de destino.
+
+Intentar ejecutar manualmente: `pwsh playwright.ps1 install chromium` desde la carpeta del EXE.
+
 ### El bot no responde despues de "turno"
 
 1. Verificar que el numero del bot sea correcto (sin +, con codigo de pais).

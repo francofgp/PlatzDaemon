@@ -51,6 +51,16 @@ public class WhatsAppAutomationService : IAsyncDisposable
         Directory.CreateDirectory(_browserDataPath);
     }
 
+    private async Task EnsureBrowserInstalledAsync()
+    {
+        await _log.LogInfoAsync("Verificando navegador Chromium...");
+        var exitCode = Microsoft.Playwright.Program.Main(new[] { "install", "chromium" });
+        if (exitCode != 0)
+            await _log.LogWarningAsync($"Playwright install retorno codigo {exitCode}");
+        else
+            await _log.LogInfoAsync("Chromium verificado.");
+    }
+
     /// <summary>
     /// Opens a visible browser window for WhatsApp Web QR scanning.
     /// </summary>
@@ -63,6 +73,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
 
             await _log.LogInfoAsync("Abriendo navegador para escanear QR de WhatsApp Web...");
 
+            await EnsureBrowserInstalledAsync();
             _playwright = await Playwright.CreateAsync();
             _browserContext = await _playwright.Chromium.LaunchPersistentContextAsync(
                 _browserDataPath,
@@ -227,6 +238,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
             if (_browserContext == null)
             {
                 await _log.LogInfoAsync("Iniciando navegador...");
+                await EnsureBrowserInstalledAsync();
                 _playwright = await Playwright.CreateAsync();
                 _browserContext = await _playwright.Chromium.LaunchPersistentContextAsync(
                     _browserDataPath,

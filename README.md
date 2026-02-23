@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.5.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.5.1-blue" alt="Version">
   <img src="https://img.shields.io/badge/ASP.NET%20Core-10.0-purple" alt="ASP.NET Core">
   <img src="https://img.shields.io/badge/Playwright-1.51-green" alt="Playwright">
   <img src="https://img.shields.io/badge/Platform-Windows%20|%20Linux%20|%20macOS-0078D4" alt="Platform">
@@ -114,6 +114,8 @@ Conexión y verificación de WhatsApp Web, instrucciones para escanear el QR e i
 > ⚠️ **macOS**: puede bloquear la ejecución. Andá a **Preferencias del Sistema > Seguridad** y hacé click en **"Abrir de todos modos"**.
 
 3. Se va a abrir una **ventana de consola** (es normal, no la cierres) y automáticamente se abre tu **navegador** con la interfaz de Platz Daemon.
+
+> 🕐 **Primera ejecución**: la primera vez que conectes WhatsApp, la app descarga automáticamente el navegador Chromium (~100 MB). Esto tarda unos segundos dependiendo de tu conexión. Solo pasa una vez.
 
 > 🌐 Si el navegador no se abre solo, abrí manualmente **http://localhost:5000** en Chrome, Edge, Firefox, o el navegador que uses.
 
@@ -229,13 +231,13 @@ Para generar un ejecutable distribuible (self-contained, no requiere .NET instal
 
 ```bash
 # Windows
-dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true
 
 # Linux
-dotnet publish -c Release -r linux-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+dotnet publish -c Release -r linux-x64 --self-contained true /p:PublishSingleFile=true
 
 # macOS (Apple Silicon)
-dotnet publish -c Release -r osx-arm64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+dotnet publish -c Release -r osx-arm64 --self-contained true /p:PublishSingleFile=true
 ```
 
 El resultado queda en `bin/Release/net10.0/<rid>/publish/`. Para distribuir, comprimir esa carpeta y subirla a GitHub Releases.
