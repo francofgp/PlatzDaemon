@@ -46,10 +46,29 @@ public class SistemaModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        // Load full config, update only system fields, save back
+        // Si el campo llega vacío, usar el valor ya guardado (re-guardar sin cambiar el número)
+        if (string.IsNullOrWhiteSpace(BotPhoneNumber))
+        {
+            var cfgGet = _configStore.Get();
+            BotPhoneNumber = cfgGet.BotPhoneNumber ?? "";
+            ModelState.Remove(nameof(BotPhoneNumber)); // evita el mensaje por defecto "The field is required"
+        }
+
+        // Validar: solo dígitos, entre 10 y 15 (formato internacional)
+        var digitsOnly = new string((BotPhoneNumber ?? "").Where(char.IsDigit).ToArray());
+        if (digitsOnly.Length < 10 || digitsOnly.Length > 15)
+        {
+            ModelState.AddModelError(nameof(BotPhoneNumber),
+                digitsOnly.Length == 0
+                    ? "El numero del bot es obligatorio."
+                    : "El numero del bot debe tener entre 10 y 15 digitos (solo numeros). Ej: 5493534407576 o 93534407576.");
+            return Page();
+        }
+
+        // Load full config, update only system fields, save back (store digits only)
         var cfg = _configStore.Get();
         cfg.Enabled = Enabled;
-        cfg.BotPhoneNumber = BotPhoneNumber;
+        cfg.BotPhoneNumber = digitsOnly;
         cfg.Dni = Dni;
         cfg.TriggerTime = TriggerTime;
         cfg.CompetitiveMode = CompetitiveMode;

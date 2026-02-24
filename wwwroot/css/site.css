@@ -168,6 +168,14 @@ input[type="checkbox"]:focus {
 .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
 .toggle-group { display: flex; align-items: center; gap: 10px; }
 
+/* Input validation error: solo el campo con error (evita marcar DNI u otros) */
+.form-group.form-group-error input,
+.form-group.form-group-error input:focus {
+    border-color: var(--error-color);
+    color: var(--error-color);
+    outline-color: var(--error-color);
+}
+
 /* Utilities */
 .text-muted { color: var(--secondary-color); }
 .text-success { color: #00ff88; }

@@ -5,6 +5,17 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.5.7] - 2026-02-23
+
+### Added
+- **Normalización del número del bot**: al abrir el chat de WhatsApp se usa formato internacional (solo dígitos); si el número es local Argentina (10-11 dígitos empezando en 9), se antepone 54. La URL siempre es `https://web.whatsapp.com/send?phone=XXX`. Log cambiado a "Abriendo chat del bot por URL (XXX)".
+
+### Changed
+- **Validación del número del bot (Sistema)**: el campo acepta solo entre 10 y 15 dígitos (se ignoran espacios/guiones). Mensajes de error en español ("El numero del bot es obligatorio." / "El numero del bot debe tener entre 10 y 15 digitos..."). Si el campo llega vacío al guardar, se usa el valor ya guardado en config (re-guardar sin tocar el número). El error visual (borde rojo) se aplica solo a ese campo (clase `form-group-error`), no al DNI. Mismo formato de input que el DNI (`type="text"`).
+
+### Fixed
+- **ArgumentNullException** al guardar en Sistema cuando `BotPhoneNumber` llegaba null (ej. envío del formulario sin valor).
+
 ## [1.5.6] - 2026-02-23
 
 ### Changed
