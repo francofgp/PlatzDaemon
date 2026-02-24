@@ -76,7 +76,7 @@ public class SistemaModelTests
         _configStore.Get().Returns(existingConfig);
 
         _model.Enabled = false;
-        _model.BotPhoneNumber = "555";
+        _model.BotPhoneNumber = "5493534407576"; // 10-15 dígitos para pasar validación
         _model.Dni = "11111";
         _model.TriggerTime = "07:00";
         _model.CompetitiveMode = true;
@@ -85,7 +85,7 @@ public class SistemaModelTests
 
         await _configStore.Received(1).SaveAsync(Arg.Is<BookingConfig>(c =>
             c.Enabled == false &&
-            c.BotPhoneNumber == "555" &&
+            c.BotPhoneNumber == "5493534407576" &&
             c.Dni == "11111" &&
             c.TriggerTime == "07:00" &&
             c.CompetitiveMode == true &&
