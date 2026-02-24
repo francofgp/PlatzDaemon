@@ -35,7 +35,7 @@ public class SleepPreventionService : BackgroundService
         _configuration = configuration;
         _logger = logger;
 
-        _hoursAhead = _configuration.GetValue("SleepPrevention:HoursAhead", 6.0);
+        _hoursAhead = _configuration.GetValue("SleepPrevention:HoursAhead", 24.0);
         _pollIntervalMinutes = _configuration.GetValue("SleepPrevention:PollIntervalMinutes", 5);
         _inhibitProcessTimeoutSeconds = _configuration.GetValue("SleepPrevention:InhibitProcessTimeoutSeconds", 3600);
     }
@@ -91,12 +91,13 @@ public class SleepPreventionService : BackgroundService
 
     private void LogStartupMechanism()
     {
+        var msg = $"Prevencion de suspension: disponible. Se activara cuando el proximo disparo este en las proximas {_hoursAhead:F0} h.";
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            _ = _log.LogInfoAsync("Prevencion de suspension: activa (Windows API).");
+            _ = _log.LogInfoAsync(msg + " (Windows API)");
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            _ = _log.LogInfoAsync("Prevencion de suspension: activa (Linux: systemd-inhibit).");
+            _ = _log.LogInfoAsync(msg + " (Linux: systemd-inhibit)");
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            _ = _log.LogInfoAsync("Prevencion de suspension: activa (macOS: caffeinate).");
+            _ = _log.LogInfoAsync(msg + " (macOS: caffeinate)");
         else
             _ = _log.LogWarningAsync("Prevencion de suspension: OS no soportado, desactivada.");
     }
@@ -118,20 +119,27 @@ public class SleepPreventionService : BackgroundService
                 return;
             }
             _isInhibiting = true;
+            await _log.LogInfoAsync($"Prevencion de suspension: activada (proximo disparo en las proximas {_hoursAhead:F0} h). La PC no se suspendera.");
             return;
         }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             if (StartLinuxInhibitProcess())
+            {
                 _isInhibiting = true;
+                _ = _log.LogInfoAsync($"Prevencion de suspension: activada (proximo disparo en las proximas {_hoursAhead:F0} h). La PC no se suspendera.");
+            }
             return;
         }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             if (StartMacOsInhibitProcess())
+            {
                 _isInhibiting = true;
+                _ = _log.LogInfoAsync($"Prevencion de suspension: activada (proximo disparo en las proximas {_hoursAhead:F0} h). La PC no se suspendera.");
+            }
             return;
         }
     }
@@ -239,6 +247,7 @@ public class SleepPreventionService : BackgroundService
                 _logger?.LogWarning(ex, "SetThreadExecutionState(ES_CONTINUOUS) failed");
             }
             _isInhibiting = false;
+            await _log.LogInfoAsync("Prevencion de suspension: desactivada (no hay disparo en la ventana). La PC puede suspenderse.");
             return;
         }
 
@@ -255,6 +264,7 @@ public class SleepPreventionService : BackgroundService
             }
             _inhibitProcess = null;
             _isInhibiting = false;
+            await _log.LogInfoAsync("Prevencion de suspension: desactivada (no hay disparo en la ventana). La PC puede suspenderse.");
         }
     }
 

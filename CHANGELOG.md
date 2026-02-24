@@ -5,6 +5,11 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.5.6] - 2026-02-23
+
+### Changed
+- **Prevención de suspensión**: ventana por defecto aumentada de 6 h a **24 h** (`SleepPrevention:HoursAhead`) para cubrir el caso "disparo a las 8am desde la noche anterior". Mensaje de arranque aclara que está "disponible" y "se activará cuando el próximo disparo esté en las próximas X h" (evita confusión: antes parecía que ya estaba protegiendo). Log explícito al **activar** ("La PC no se suspendera") y al **desactivar** ("no hay disparo en la ventana. La PC puede suspenderse") para que en el Terminal se vea claro si en ese momento se está bloqueando el sleep o no.
+
 ## [1.5.5] - 2026-02-23
 
 ### Changed
