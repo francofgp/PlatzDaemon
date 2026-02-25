@@ -106,7 +106,11 @@ public class SleepPreventionService : BackgroundService
     {
         if (_isInhibiting)
         {
-            EnsureInhibitProcessRunning();
+            // Windows: refresh per-thread state on every poll (async can switch threads)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED);
+            else
+                EnsureInhibitProcessRunning();
             return;
         }
 

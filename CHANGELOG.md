@@ -5,12 +5,17 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [Unreleased]
+
 ## [1.5.9] - 2026-02-23
 
 ### Changed
 - **Normalización robusta del número del bot**: se quita el `0` inicial (prefijo troncal argentino, ej: `03534090496` → `3534090496`) antes de aplicar las reglas de formato internacional. Ahora cubre todos los formatos comunes: `5493534090496`, `93534090496`, `3534090496`, `03534090496`. Código de país (`CountryCode`) configurable en `config.json` (default `"54"`).
 - **Default del número del bot** cambiado de `93534407576` a `5493534407576` (ya normalizado, funciona de entrada al descargar el EXE).
 - **Tests**: actualizados para reflejar el nuevo default.
+
+### Fixed
+- **Prevención de suspensión (Windows)**: `SetThreadExecutionState` ahora se refresca en cada poll (cada 5 min) en vez de llamarse una sola vez. En código async el thread puede cambiar entre polls; sin refrescar, el estado podía perderse y la PC suspenderse igual.
 
 ## [1.5.8] - 2026-02-23
 
