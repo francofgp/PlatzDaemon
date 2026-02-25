@@ -9,7 +9,7 @@ public class BookingConfigTests
     {
         var config = new BookingConfig();
 
-        Assert.Equal("93534407576", config.BotPhoneNumber);
+        Assert.Equal("5493534407576", config.BotPhoneNumber);
         Assert.Equal("", config.Dni);
         Assert.Equal("08:00", config.TriggerTime);
         Assert.True(config.CompetitiveMode);

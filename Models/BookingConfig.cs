@@ -2,8 +2,11 @@ namespace PlatzDaemon.Models;
 
 public class BookingConfig
 {
-    /// <summary>Numero de WhatsApp del bot del club (sin +). Default: 93534407576</summary>
-    public string BotPhoneNumber { get; set; } = "93534407576";
+    /// <summary>Numero de WhatsApp del bot del club en formato internacional (sin +). Default: 5493534407576</summary>
+    public string BotPhoneNumber { get; set; } = "5493534407576";
+
+    /// <summary>Codigo de pais para normalizar numeros locales (ej: 54 = Argentina)</summary>
+    public string CountryCode { get; set; } = "54";
 
     /// <summary>DNI / numero de documento del socio</summary>
     public string Dni { get; set; } = "";

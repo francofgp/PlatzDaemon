@@ -5,21 +5,24 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.5.9] - 2026-02-23
+
+### Changed
+- **Normalización robusta del número del bot**: se quita el `0` inicial (prefijo troncal argentino, ej: `03534090496` → `3534090496`) antes de aplicar las reglas de formato internacional. Ahora cubre todos los formatos comunes: `5493534090496`, `93534090496`, `3534090496`, `03534090496`. Código de país (`CountryCode`) configurable en `config.json` (default `"54"`).
+- **Default del número del bot** cambiado de `93534407576` a `5493534407576` (ya normalizado, funciona de entrada al descargar el EXE).
+- **Tests**: actualizados para reflejar el nuevo default.
+
 ## [1.5.8] - 2026-02-23
 
-### Changed
-- **Test**: `OnPostAsync_UpdatesOnlySystemFields_PreservesBookingFields` usa número válido (5493534407576) para que pase la validación.
-
-## [1.5.7] - 2026-02-23
-
 ### Added
-- **SleepPreventionService**: inhibe la suspensión de la PC si hay un próximo disparo programado en las próximas 24 h. Por OS: Windows (SetThreadExecutionState), Linux (systemd-inhibit), macOS (caffeinate). Config opcional: `SleepPrevention:HoursAhead`, `PollIntervalMinutes`, `InhibitProcessTimeoutSeconds`.
+- **Normalización del número del bot**: al abrir el chat de WhatsApp se usa formato internacional (solo dígitos); si el número es local Argentina (10-11 dígitos empezando en 9), se antepone 54. La URL siempre es `https://web.whatsapp.com/send?phone=XXX`. Log cambiado a "Abriendo chat del bot por URL (XXX)".
 
 ### Changed
+- **Validación del número del bot (Sistema)**: el campo acepta solo entre 10 y 15 dígitos (se ignoran espacios/guiones). Mensajes de error en español ("El numero del bot es obligatorio." / "El numero del bot debe tener entre 10 y 15 digitos..."). Si el campo llega vacío al guardar, se usa el valor ya guardado en config (re-guardar sin tocar el número). El error visual (borde rojo) se aplica solo a ese campo (clase `form-group-error`), no al DNI.
 - **Test**: `OnPostAsync_UpdatesOnlySystemFields_PreservesBookingFields` usa número válido (5493534407576) para que pase la validación.
 
 ### Fixed
-- **ArgumentNullException** al guardar en Sistema cuando `BotPhoneNumber` era null (uso de `?? ""`).
+- **ArgumentNullException** al guardar en Sistema cuando `BotPhoneNumber` llegaba null (ej. envío del formulario sin valor).
 
 ## [1.5.6] - 2026-02-23
 
@@ -165,7 +168,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Validación de horarios**: formato `HH:MMhs` con auto-formateo y detección de duplicados.
 - **CI/CD**: GitHub Actions workflow para publicar releases automáticamente con tags.
 
-[Unreleased]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.8...HEAD
+[Unreleased]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.9...HEAD
+[1.5.9]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.8...v1.5.9
 [1.5.8]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.7...v1.5.8
 [1.5.7]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.6...v1.5.7
 [1.5.6]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.5...v1.5.6

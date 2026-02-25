@@ -29,7 +29,7 @@ public class ConfigStoreTests : IDisposable
         var store = new ConfigStore(_env);
         var config = store.Get();
 
-        Assert.Equal("93534407576", config.BotPhoneNumber);
+        Assert.Equal("5493534407576", config.BotPhoneNumber);
         Assert.Equal("08:00", config.TriggerTime);
         Assert.True(config.Enabled);
     }
@@ -69,7 +69,7 @@ public class ConfigStoreTests : IDisposable
         var store = new ConfigStore(_env);
         var config = store.Get();
 
-        Assert.Equal("93534407576", config.BotPhoneNumber);
+        Assert.Equal("5493534407576", config.BotPhoneNumber);
     }
 
     [Fact]

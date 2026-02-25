@@ -50,7 +50,7 @@
             <div class="form-group @(ViewData.ModelState["BotPhoneNumber"]?.Errors?.Count > 0 ? "form-group-error" : "")">
                 <label asp-for="BotPhoneNumber">Numero del bot (sin +)</label>
                 <input type="text" asp-for="BotPhoneNumber" placeholder="5493534407576" maxlength="20" />
-                <p class="field-help">Solo numeros, entre 10 y 15 digitos. Ej: 5493534407576 o 93534407576. Este valor te lo proporciona tu club.</p>
+                <p class="field-help">Solo numeros, entre 10 y 15 digitos. Ej: 5493534407576, 93534407576 o 3534090496. Se normaliza automaticamente al formato internacional. Este valor te lo proporciona tu club.</p>
                 <span asp-validation-for="BotPhoneNumber" class="text-error"></span>
             </div>
 

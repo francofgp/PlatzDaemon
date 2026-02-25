@@ -336,8 +336,8 @@ public class WhatsAppAutomationService : IAsyncDisposable
             await _log.LogSuccessAsync("Sesion de WhatsApp activa.");
 
             // Open chat with bot
-            await _log.LogInfoAsync($"Abriendo chat del bot por URL ({NormalizePhoneForWhatsAppUrl(config.BotPhoneNumber)})...");
-            if (!await OpenBotChatAsync(page, config.BotPhoneNumber))
+            await _log.LogInfoAsync($"Abriendo chat del bot por URL ({NormalizePhoneForWhatsAppUrl(config.BotPhoneNumber, config.CountryCode)})...");
+            if (!await OpenBotChatAsync(page, config.BotPhoneNumber, config.CountryCode))
             {
                 await _log.LogErrorAsync("No se pudo abrir el chat del bot.");
                 await _appState.UpdateStatusAsync(DaemonStatus.Error, "Chat del bot no encontrado");
@@ -667,25 +667,41 @@ public class WhatsAppAutomationService : IAsyncDisposable
 
     /// <summary>
     /// Normalizes the bot phone number for the WhatsApp Web URL (international format, digits only).
-    /// If the number looks like Argentina local (10-11 digits starting with 9), prepends country code 54.
+    /// WhatsApp expects Argentine mobiles as: countryCode + 9 + area + number (e.g. 5493534090496).
+    ///
+    /// Steps:
+    ///   1. Extract digits only, strip leading 0 (trunk prefix used in national dialing).
+    ///   2. If already international (starts with countryCode, 12+ digits) → return as-is.
+    ///   3. 11 digits starting with 9 (e.g. 93534090496) → prepend countryCode.
+    ///   4. 10 digits (area + number, e.g. 3534090496) → prepend countryCode + "9".
+    ///   5. Anything else → return digits as-is (best effort).
     /// </summary>
-    private static string NormalizePhoneForWhatsAppUrl(string? phoneNumber)
+    internal static string NormalizePhoneForWhatsAppUrl(string? phoneNumber, string countryCode = "54")
     {
         if (string.IsNullOrWhiteSpace(phoneNumber)) return "";
         var digits = new string(phoneNumber.Where(char.IsDigit).ToArray());
         if (digits.Length == 0) return "";
-        // Already international (e.g. 54... for Argentina, 12-13 digits)
-        if (digits.StartsWith("54") && digits.Length >= 12) return digits;
-        // Argentina local mobile: 10 or 11 digits starting with 9 → prepend 54
-        if ((digits.Length == 10 || digits.Length == 11) && digits[0] == '9') return "54" + digits;
+
+        // Strip leading 0 (trunk prefix: 0353-4090496 → 3534090496)
+        if (digits[0] == '0') digits = digits[1..];
+
+        // Already international: countryCode + 9 + area + number (12-13 digits)
+        if (digits.StartsWith(countryCode) && digits.Length >= 12) return digits;
+
+        // 9 + area + number (11 digits, e.g. 93534090496)
+        if (digits.Length == 11 && digits[0] == '9') return countryCode + digits;
+
+        // area + number (10 digits, e.g. 3534090496) — needs countryCode + mobile prefix 9
+        if (digits.Length == 10) return countryCode + "9" + digits;
+
         return digits;
     }
 
-    private async Task<bool> OpenBotChatAsync(IPage page, string phoneNumber)
+    private async Task<bool> OpenBotChatAsync(IPage page, string phoneNumber, string countryCode)
     {
         try
         {
-            var normalized = NormalizePhoneForWhatsAppUrl(phoneNumber);
+            var normalized = NormalizePhoneForWhatsAppUrl(phoneNumber, countryCode);
             if (string.IsNullOrEmpty(normalized))
             {
                 await _log.LogErrorAsync("Numero del bot invalido (vacio o sin digitos).");
