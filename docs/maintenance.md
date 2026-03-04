@@ -139,10 +139,10 @@ La auto-instalacion de Chromium fallo. Posibles causas:
 
 Intentar ejecutar manualmente: `pwsh playwright.ps1 install chromium` desde la carpeta del EXE.
 
-### El bot no responde despues de "turno"
+### El bot no responde despues de clickear "Pedir turno"
 
 1. Verificar que el numero del bot sea correcto (sin +, con codigo de pais).
-2. Enviar "turno" manualmente al bot desde el celular para verificar que funcione.
+2. Enviar "menu" manualmente al bot desde el celular y luego clickear "Pedir turno" para verificar que funcione.
 3. Revisar los logs: el conteo de `message-in` deberia incrementar. Si no incrementa, el conteo puede estar fallando.
 4. Si el conteo siempre es 0, los selectores de mensaje cambiaron. Inspeccionar el DOM con DevTools.
 

@@ -344,11 +344,15 @@ public class WhatsAppAutomationService : IAsyncDisposable
                 return false;
             }
 
-            // Competitive mode: type but don't send yet
+            // Competitive mode: send "menu" to get main menu ready, then wait for trigger
             if (competitivePreArm)
             {
-                await _log.LogInfoAsync("Modo competitivo: mensaje pre-cargado, esperando hora exacta...");
-                await TypeMessageAsync(page, "turno");
+                await _log.LogInfoAsync("Modo competitivo: enviando 'menu' para preparar el menu principal...");
+                var preArmCount = await GetMessageCountAsync(page);
+                await SendMessageAsync(page, "menu");
+                await WaitForBotResponseAsync(page, preArmCount, 10000);
+                await ScrollToBottomAsync(page);
+                await _log.LogSuccessAsync("Modo competitivo: menu principal listo, esperando hora exacta...");
                 return true;
             }
 
@@ -366,17 +370,24 @@ public class WhatsAppAutomationService : IAsyncDisposable
 
                 await ScrollToBottomAsync(page);
 
-                // STEP 0: Clear any pending conversation (send "Salir" to reset bot)
+                // STEP 0: Clear any pending conversation (send "menu" to reset bot)
                 await ClearPendingConversationAsync(page);
                 await Task.Delay(1000);
 
-                // STEP 1: Send "turno" and WAIT for bot to respond
+                // STEP 1: Click "Pedir turno" button and WAIT for bot to respond
                 var countBeforeTurno = await GetMessageCountAsync(page, logDebug: attempt == 1);
                 await _log.LogInfoAsync($"Mensajes actuales en el chat: {countBeforeTurno}");
-                await _log.LogInfoAsync("Enviando 'turno' al bot...");
-                await SendMessageAsync(page, "turno");
+                await _log.LogInfoAsync("Clickeando boton 'Pedir turno'...");
+                if (!await ClickButtonInRecentMessagesAsync(page, "Pedir turno", 15000))
+                {
+                    await _log.LogErrorAsync("No se encontro el boton 'Pedir turno' en mensajes recientes.");
+                    await LogVisibleOptionsAsync(page, "menu principal");
+                    await _appState.UpdateStatusAsync(DaemonStatus.Error, "Boton 'Pedir turno' no encontrado");
+                    return false;
+                }
+                await _log.LogSuccessAsync("Boton 'Pedir turno' clickeado.");
 
-                // Soft wait: try to detect bot response, but continue even if detection fails
+                // Wait for bot to respond after clicking
                 await _log.LogInfoAsync("Esperando respuesta del bot...");
                 var botResponded = await WaitForBotResponseAsync(page, countBeforeTurno, 15000);
                 if (botResponded)
@@ -386,7 +397,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
                 else
                 {
                     await _log.LogWarningAsync("No se detecto nueva respuesta por conteo de mensajes. Continuando de todas formas...");
-                    await Task.Delay(5000); // Extra safety delay
+                    await Task.Delay(5000);
                     await ScrollToBottomAsync(page);
                 }
 
@@ -649,7 +660,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
     }
 
     /// <summary>
-    /// Sends Enter key on a pre-armed message (competitive mode).
+    /// Clicks the "Pedir turno" button on a pre-armed menu (competitive mode).
     /// </summary>
     public async Task SendPreArmedMessageAsync()
     {
@@ -657,8 +668,18 @@ public class WhatsAppAutomationService : IAsyncDisposable
         var page = _browserContext.Pages.FirstOrDefault();
         if (page == null) return;
 
-        await page.Keyboard.PressAsync("Enter");
-        await _log.LogSuccessAsync("Mensaje 'turno' enviado (modo competitivo)!");
+        if (await ClickButtonInRecentMessagesAsync(page, "Pedir turno", 5000))
+        {
+            await _log.LogSuccessAsync("Boton 'Pedir turno' clickeado (modo competitivo)!");
+        }
+        else
+        {
+            await _log.LogWarningAsync("No se encontro boton 'Pedir turno' en modo competitivo. Intentando con texto...");
+            await SendMessageAsync(page, "menu");
+            await Task.Delay(3000);
+            await ScrollToBottomAsync(page);
+            await ClickButtonInRecentMessagesAsync(page, "Pedir turno", 10000);
+        }
     }
 
     // ========================================================================
@@ -753,21 +774,21 @@ public class WhatsAppAutomationService : IAsyncDisposable
     // ========================================================================
 
     /// <summary>
-    /// Sends "Salir" to reset the bot to its main menu.
+    /// Sends "menu" to reset the bot to its main menu.
     /// Handles the case where the bot asks "Por favor selecciona una opción"
-    /// by sending "Salir" a second time. Max 2 rounds.
+    /// by sending "menu" a second time. Max 2 rounds.
     /// </summary>
     private async Task ClearPendingConversationAsync(IPage page)
     {
         try
         {
-            await _log.LogInfoAsync("Limpiando conversacion pendiente (enviando 'Salir')...");
+            await _log.LogInfoAsync("Limpiando conversacion pendiente (enviando 'menu')...");
             await ScrollToBottomAsync(page);
 
             for (int round = 1; round <= 2; round++)
             {
                 var countBefore = await GetMessageCountAsync(page);
-                await SendMessageAsync(page, "Salir");
+                await SendMessageAsync(page, "menu");
                 await WaitForBotResponseAsync(page, countBefore, 10000);
                 await ScrollToBottomAsync(page);
 
@@ -800,7 +821,7 @@ public class WhatsAppAutomationService : IAsyncDisposable
                 }
                 else if (status == "pending" && round < 2)
                 {
-                    await _log.LogWarningAsync("Bot todavia tiene conversacion pendiente. Enviando 'Salir' de nuevo...");
+                    await _log.LogWarningAsync("Bot todavia tiene conversacion pendiente. Enviando 'menu' de nuevo...");
                     await Task.Delay(1000);
                     continue;
                 }

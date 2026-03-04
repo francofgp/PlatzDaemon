@@ -148,7 +148,7 @@ No intentes leer todo de una. Enfocate primero en `ExecuteBookingAsync` (linea ~
 | **Horario** | Un slot especifico (ej: `18:00hs`). El usuario configura una lista ordenada por prioridad. |
 | **Cancha** | Un recurso reservable (ej: "Cancha Central", "Cancha 9"). Tambien con lista de prioridad. |
 | **Modo competitivo** | Optimizacion de velocidad: pre-carga el mensaje 20 segundos antes del disparo y lo envia en el milisegundo exacto. |
-| **Pre-arm** | Paso del modo competitivo donde se abre el chat del bot y se escribe "turno" sin enviarlo. |
+| **Pre-arm** | Paso del modo competitivo donde se abre el chat del bot, se envia "menu" para obtener el menu principal, y se espera al momento exacto para clickear "Pedir turno". |
 | **Merge parcial** | Patron de persistencia donde cada pagina solo actualiza sus campos de `BookingConfig` sin sobreescribir los de la otra pagina. |
 | **Persistent context** | Modo de Playwright que guarda cookies, localStorage y datos de sesion del navegador en disco (`Data/browser-data/`), evitando re-login. |
 | **Headful** | Navegador con ventana visible (opuesto a headless). Obligatorio porque WhatsApp Web bloquea navegadores headless. |

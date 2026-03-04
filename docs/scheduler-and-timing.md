@@ -129,17 +129,17 @@ El modo competitivo optimiza la velocidad para situaciones de alta competencia p
 T-20s: Pre-arm
   ├── Abrir/reusar Chromium
   ├── Navegar al chat del bot
-  ├── Escribir "turno" en el compose box (sin Enter)
-  └── Mensaje queda "armado"
+  ├── Enviar "menu" al bot
+  └── Menu principal queda visible (boton "Pedir turno" listo)
 
 T=0: Disparo
   ├── PrecisionWaitAsync finaliza
-  ├── SendPreArmedMessageAsync → presiona Enter
-  └── "turno" se envia al bot
+  ├── SendPreArmedMessageAsync → clickea boton "Pedir turno"
+  └── Bot inicia flujo de reserva
 
 T+2s: Flujo completo
   └── ExecuteBookingAsync(competitivePreArm: false)
-      └── (el bot ya esta respondiendo a "turno")
+      └── (el bot ya esta respondiendo a "Pedir turno")
 ```
 
 ### Pre-arm
@@ -149,7 +149,7 @@ T+2s: Flujo completo
 2. Navega a WhatsApp Web.
 3. Verifica la sesion.
 4. Abre el chat del bot.
-5. Escribe "turno" con `TypeMessageAsync` (que clickea el compose box y tipea sin Enter).
+5. Envia "menu" al bot y espera la respuesta con el menu principal.
 6. Retorna `true`.
 
 ### Precision wait
@@ -174,23 +174,23 @@ La fase 1 minimiza CPU usage durante la espera larga. La fase 2 empieza a pollin
 
 ### Envio del mensaje pre-armado
 
-`SendPreArmedMessageAsync()` simplemente presiona Enter en la pagina:
+`SendPreArmedMessageAsync()` clickea el boton "Pedir turno" en los mensajes recientes:
 
 ```csharp
-await page.Keyboard.PressAsync("Enter");
+await ClickButtonInRecentMessagesAsync(page, "Pedir turno", 5000);
 ```
 
-El mensaje "turno" ya estaba escrito en el compose box, asi que Enter lo envia.
+El menu principal ya estaba visible con el boton "Pedir turno" listo para ser clickeado. Si el boton no se encuentra (edge case), se envia "menu" de nuevo como fallback.
 
 ### Flujo post-envio
 
-Despues de enviar, se espera 2 segundos y se ejecuta `ExecuteBookingAsync(competitivePreArm: false)`. Este flujo completo:
+Despues de clickear, se espera 2 segundos y se ejecuta `ExecuteBookingAsync(competitivePreArm: false)`. Este flujo completo:
 1. No re-abre el browser (ya esta abierto).
 2. No re-navega a WhatsApp Web (ya esta ahi).
 3. Empieza desde la limpieza de conversacion pendiente.
-4. Re-envia "turno" y sigue el flujo normal.
+4. Envia "menu" y clickea "Pedir turno" de nuevo, siguiendo el flujo normal.
 
-> El re-envio de "turno" es redundante si el primer envio ya disparo una respuesta del bot. Pero es seguro porque `ClearPendingConversationAsync` resetea la conversacion antes.
+> El re-click de "Pedir turno" es redundante si el primer click ya disparo una respuesta del bot. Pero es seguro porque `ClearPendingConversationAsync` resetea la conversacion antes.
 
 ---
 

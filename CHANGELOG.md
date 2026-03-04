@@ -7,6 +7,14 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-03-04
+
+### Changed
+- **Reset del bot**: se reemplazó el envío de "Salir" por "menu" en `ClearPendingConversationAsync`. El bot no reconocía "Salir"; "menu" es el comando documentado por el bot para volver al menú principal.
+- **Inicio de reserva**: en vez de enviar "turno" como texto, ahora se clickea el botón "🕒Pedir turno" usando `ClickButtonInRecentMessagesAsync`. Enviar texto no funcionaba; el bot solo responde al click del botón interactivo.
+- **Modo competitivo (pre-arm)**: el pre-arm ahora envía "menu" y espera a que el menú principal aparezca (botón "Pedir turno" visible). Al disparar, `SendPreArmedMessageAsync` clickea el botón en vez de presionar Enter. Incluye fallback: si el botón no se encuentra, re-envía "menu" y reintenta.
+- **Docs**: actualizados `booking-flow.md`, `maintenance.md`, `getting-started.md` y `scheduler-and-timing.md` para reflejar los nuevos comandos.
+
 ## [1.5.9] - 2026-02-23
 
 ### Changed
@@ -161,7 +169,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Modo competitivo**: pre-carga el mensaje 20 segundos antes y lo envía en el milisegundo exacto.
 - **Prioridades configurables**: múltiples horarios y canchas en orden de preferencia.
 - **Reintentos automáticos**: hasta 3 reintentos si la cancha es tomada por otro usuario.
-- **Limpieza de conversaciones**: envía "Salir" para resetear el bot antes de cada intento.
+- **Limpieza de conversaciones**: envía "menu" para resetear el bot antes de cada intento.
 - **Dashboard en tiempo real**: logs con colores, estado del daemon, cuenta regresiva y estado de WhatsApp vía SignalR.
 - **Notificaciones de escritorio**: toasts de Windows al confirmar o fallar la reserva (removido en versiones posteriores).
 - **Sesión persistente**: datos de WhatsApp Web guardados en `Data/browser-data/`.
@@ -173,7 +181,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Validación de horarios**: formato `HH:MMhs` con auto-formateo y detección de duplicados.
 - **CI/CD**: GitHub Actions workflow para publicar releases automáticamente con tags.
 
-[Unreleased]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.9...HEAD
+[Unreleased]: https://github.com/francofgp/PlatzDaemon/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.9...v1.6.0
 [1.5.9]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.8...v1.5.9
 [1.5.8]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.7...v1.5.8
 [1.5.7]: https://github.com/francofgp/PlatzDaemon/compare/v1.5.6...v1.5.7

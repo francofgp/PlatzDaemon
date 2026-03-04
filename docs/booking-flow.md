@@ -23,14 +23,14 @@ flowchart TD
     WaitSession -->|Si| OpenChat[Abrir chat del bot]
 
     OpenChat --> PreArm{Modo competitivo pre-arm?}
-    PreArm -->|Si| TypeTurno[Escribir 'turno' sin enviar]
-    TypeTurno --> ReturnPreArm([Return true])
+    PreArm -->|Si| SendMenu["Enviar 'menu' y esperar menu principal"]
+    SendMenu --> ReturnPreArm([Return true])
 
     PreArm -->|No| RetryLoop
 
     subgraph RetryLoop [Loop de reintentos - max 3]
-        Clear[Enviar 'Salir' para limpiar] --> SendTurno[Enviar 'turno']
-        SendTurno --> WaitBot1[Esperar respuesta del bot]
+        Clear["Enviar 'menu' para limpiar"] --> ClickPedirTurno["Click 'Pedir turno'"]
+        ClickPedirTurno --> WaitBot1[Esperar respuesta del bot]
         WaitBot1 --> CheckDni{Bot pidio DNI?}
         CheckDni -->|Si| SendDni[Enviar DNI]
         SendDni --> CheckName{Bot pide confirmar nombre?}
@@ -90,15 +90,15 @@ Se navega directamente a `https://web.whatsapp.com/send?phone={numero}`, que abr
 
 ### Paso 4 (modo competitivo): Pre-arm
 
-Si `competitivePreArm = true`, se escribe "turno" en el compose box **sin presionar Enter** y se retorna `true`. El scheduler se encarga de enviar despues.
+Si `competitivePreArm = true`, se envia "menu" al bot y se espera a que responda con el menu principal (donde aparece el boton "Pedir turno"). Se retorna `true`. El scheduler se encarga de clickear el boton en el momento exacto.
 
 ### Paso 5: Limpieza de conversacion pendiente
 
-`ClearPendingConversationAsync` envia "Salir" al bot hasta 2 veces para resetear cualquier conversacion previa. Detecta si el bot volvio al menu principal buscando frases como "como puedo ayudarte" o "pedir turno".
+`ClearPendingConversationAsync` envia "menu" al bot hasta 2 veces para resetear cualquier conversacion previa. Detecta si el bot volvio al menu principal buscando frases como "como puedo ayudarte" o "pedir turno".
 
-### Paso 6: Enviar "turno"
+### Paso 6: Click "Pedir turno"
 
-Cuenta mensajes entrantes antes de enviar, envia "turno", y espera hasta que el conteo de `message-in` aumente (hasta 15 segundos). Si el conteo no cambia, espera 5 segundos extra como fallback.
+Cuenta mensajes entrantes antes de clickear, usa `ClickButtonInRecentMessagesAsync` para clickear el boton "Pedir turno" en los mensajes recientes, y espera hasta que el conteo de `message-in` aumente (hasta 15 segundos). Si el conteo no cambia, espera 5 segundos extra como fallback.
 
 ### Paso 7: DNI (condicional)
 
@@ -179,7 +179,7 @@ Polling de hasta 20 segundos, cada 2 segundos:
 
 Si despues de confirmar, el bot dice que la cancha no esta disponible:
 1. Log "CANCHA RECHAZADA".
-2. Si `attempt < 3`, vuelve al paso 5 (limpieza + turno + todo de nuevo).
+2. Si `attempt < 3`, vuelve al paso 5 (limpieza + click Pedir turno + todo de nuevo).
 3. Si se agotan los 3 intentos, error final.
 
 ### Browser cerrado (hasta 1 reintento)
